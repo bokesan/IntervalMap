@@ -1,0 +1,7 @@
+Maps with intervals as keys offering efficient search.
+
+Installation
+============
+
+$ cabal install IntervalMap
+
