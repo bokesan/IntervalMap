@@ -158,7 +158,7 @@ prop_map (IMI m) = let m' = M.map (1+) m in
 prop_findWithDefault (IMI m) (II k) = M.findWithDefault (lowerBound k) k m == lowerBound k
 
 prop_searchPoint (IMI m) p = sameElements (M.searchPoint p m)
-                                          [e | e@(k,_) <- M.toList m, k `contains` p]
+                                          [e | e@(k,_) <- M.toList m, p `inside` k]
 
 prop_searchInterval (IMI m) (II i) = sameElements (M.searchInterval i m)
 				                  [e | e@(k,_) <- M.toList m, k `overlaps` i]

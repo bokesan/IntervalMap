@@ -33,6 +33,9 @@ prop_ord =
   ClosedInterval 2 3 > OpenInterval 1 2
   
 
+contains :: Ord a => Interval a -> a -> Bool
+contains = flip inside
+
 prop_contains1 =
   (c15 `contains` 3) &&
   (o15 `contains` 3) &&
@@ -111,7 +114,7 @@ prop_compare1 (II i1) (II i2) =
     EQ -> True
 
 prop_contains (II i) p =
-  if i `contains` p then
+  if p `inside` i then
     lowerBound i <= p && upperBound i >= p
   else
     p <= lowerBound i || p >= upperBound i

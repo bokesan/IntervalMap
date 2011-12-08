@@ -10,7 +10,8 @@
 -- a 'Data.IntervalMap'.
 --
 module Data.Interval (Interval(..), lowerBound, upperBound, leftClosed, rightClosed,
-                      isEmpty, contains, overlaps, subsumes,
+                      isEmpty, overlaps, subsumes, before, after,
+                      below, inside, above
                      ) where
 
 -- | Intervals with endpoints of type @a@.
@@ -140,11 +141,41 @@ subsumes (IntervalOC     lo1 hi1) (OpenInterval   lo2 hi2) =  lo1 <= lo2 && hi1 
 subsumes (IntervalOC     lo1 hi1) (IntervalCO     lo2 hi2) =  lo1 <  lo2 && hi1 >= hi2
 subsumes (IntervalOC     lo1 hi1) (IntervalOC     lo2 hi2) =  lo1 <= lo2 && hi1 >= hi2
 
+-- | Interval strictly before another?
+before :: Ord a => Interval a -> Interval a -> Bool
+IntervalCO _ l     `before` r =  l <= lowerBound r
+ClosedInterval _ l `before` IntervalCO r _      =  l < r
+ClosedInterval _ l `before` ClosedInterval r _  =  l < r
+ClosedInterval _ l `before` OpenInterval r _    =  l <= r
+ClosedInterval _ l `before` IntervalOC r _      =  l <= r
+OpenInterval _ l   `before` r =  l <= lowerBound r
+IntervalOC _ l     `before` IntervalCO r _      =  l < r
+IntervalOC _ l     `before` ClosedInterval r _  =  l < r
+IntervalOC _ l     `before` OpenInterval r _    =  l <= r
+IntervalOC _ l     `before` IntervalOC r _      =  l <= r
+                                   
+-- | Interval strictly after another?
+after :: Ord a => Interval a -> Interval a -> Bool
+r `after` l = l `before` r
 
 
 -- | Does the interval contain a given point?
-contains :: (Ord a) => Interval a -> a -> Bool
-contains (ClosedInterval lo hi) p =  lo <= p && p <= hi
-contains (OpenInterval   lo hi) p =  lo <  p && p <  hi
-contains (IntervalCO     lo hi) p =  lo <= p && p <  hi
-contains (IntervalOC     lo hi) p =  lo <  p && p <= hi
+inside :: (Ord a) => a -> Interval a -> Bool
+p `inside` (IntervalCO     lo hi) =  lo <= p && p <  hi
+p `inside` (ClosedInterval lo hi) =  lo <= p && p <= hi
+p `inside` (OpenInterval   lo hi) =  lo <  p && p <  hi
+p `inside` (IntervalOC     lo hi) =  lo <  p && p <= hi
+
+-- | Point strictly less than lower bound?
+below :: (Ord a) => a -> Interval a -> Bool
+p `below` (IntervalCO     l _)  =  p <  l
+p `below` (ClosedInterval l _)  =  p <  l
+p `below` (OpenInterval   l _)  =  p <= l
+p `below` (IntervalOC     l _)  =  p <= l
+
+-- | Point strictly greater than upper bound?
+above :: (Ord a) => a -> Interval a -> Bool
+p `above` (IntervalCO     _ u)  =  p >= u
+p `above` (ClosedInterval _ u)  =  p >  u
+p `above` (OpenInterval   _ u)  =  p >= u
+p `above` (IntervalOC     _ u)  =  p >  u

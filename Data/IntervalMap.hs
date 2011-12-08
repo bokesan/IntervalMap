@@ -244,37 +244,31 @@ isRed :: IntervalMap k v -> Bool
 isRed (Node R _ _ _ _ _) = True
 isRed _ = False
 
--- -------------------------------------------
+turnBlack :: IntervalMap k v -> IntervalMap k v
+turnBlack (Node R k m vs l r) = Node B k m vs l r
+turnBlack t = t
 
--- interval with the greatest upper bound. The lower bound is ignored
+turnRed :: IntervalMap k v -> IntervalMap k v
+turnRed Nil = error "turnRed: Leaf"
+turnRed (Node B k m v l r) = Node R k m v l r
+turnRed t = t
+
+-- construct node, recomputing the upper key bound.
+mNode :: (Ord k) => Color -> Interval k -> v -> IntervalMap k v -> IntervalMap k v -> IntervalMap k v
+mNode c k v l r = Node c k (maxUpper k l r) v l r
+
+maxUpper :: Ord k => Interval k -> IntervalMap k v -> IntervalMap k v -> Interval k
+maxUpper k Nil                Nil                = k `seq` k
+maxUpper k Nil                (Node _ _ m _ _ _) = maxByUpper k m
+maxUpper k (Node _ _ m _ _ _) Nil                = maxByUpper k m
+maxUpper k (Node _ _ l _ _ _) (Node _ _ r _ _ _) = maxByUpper k (maxByUpper l r)
+
+-- interval with the greatest upper bound. The lower bound is ignored!
 maxByUpper :: Ord a => Interval a -> Interval a -> Interval a
 maxByUpper a b | rightClosed a = if upperBound a >= upperBound b then a else b
                | otherwise     = if upperBound a >  upperBound b then a else b
 
--- greater than upper bound?
-greater :: (Ord a) => a -> Interval a -> Bool
-a `greater` iv | rightClosed iv =  a >  upperBound iv
-               | otherwise      =  a >= upperBound iv
-
-less :: (Ord a) => a -> Interval a -> Bool
-a `less` iv | leftClosed iv  =  a <  lowerBound iv
-            | otherwise      =  a <= lowerBound iv
-
--- Interval strictly greater than UBound?
--- Second argument is an interval trated as ubound
-vGreater :: (Ord a) => Interval a -> Interval a -> Bool
-iv `vGreater` (OpenInterval _ b)   = lowerBound iv >= b
-iv `vGreater` (IntervalCO _ b)     = lowerBound iv >= b
-iv `vGreater` (ClosedInterval _ b) | leftClosed iv = lowerBound iv > b
-                                   | otherwise     = lowerBound iv >= b
-iv `vGreater` (IntervalOC _ b)     | leftClosed iv = lowerBound iv > b
-                                   | otherwise     = lowerBound iv >= b
-
--- Interval strictly below another interval?
-vLess :: (Ord a) => Interval a -> Interval a -> Bool
-iv1 `vLess` iv2 | rightClosed iv1 && leftClosed iv2 = upperBound iv1 <  lowerBound iv2
-                | otherwise                         = upperBound iv1 <= lowerBound iv2
-
+-- ---------------------------------------------------------
 
 -- | The empty map.
 empty :: IntervalMap k v
@@ -349,18 +343,18 @@ findWithDefault def k m = case lookup k m of
 searchPoint :: (Ord k) => k -> IntervalMap k v -> [(Interval k, v)]
 searchPoint p Nil = p `seq` []
 searchPoint p (Node _ k m v l r)
-  | p `greater` m   =  []    -- if point is to the right of all intervals in this tree, no result
-  | p `less` k      =  searchPoint p l -- if point is to the left of the lower bound, it can't be in the right subtree
-  | k `contains` p  =  (k,v) : searchPoint p l ++ searchPoint p r
-  | otherwise       =          searchPoint p l ++ searchPoint p r
+  | p `above` m  =  []    -- if point is to the right of all intervals in this tree, no result
+  | p `below` k  =  searchPoint p l -- if point is to the left of the lower bound, it can't be in the right subtree
+  | p `inside` k =  (k,v) : searchPoint p l ++ searchPoint p r
+  | otherwise    =          searchPoint p l ++ searchPoint p r
 
 -- | Return all key/value pairs where the key intervals overlap (intersect) the given interval.
 -- The order in which the elements are returned is undefined.
 searchInterval :: (Ord k) => Interval k -> IntervalMap k v -> [(Interval k, v)]
 searchInterval i Nil = i `seq` []
 searchInterval i (Node _ k m v l r)
-  | i `vGreater` m  =  []
-  | i `vLess` k     =  searchInterval i l
+  | i `after` m     =  []
+  | i `before` k    =  searchInterval i l
   | i `overlaps` k  =  (k,v) : searchInterval i l ++ searchInterval i r
   | otherwise       =          searchInterval i l ++ searchInterval i r
 
@@ -383,8 +377,9 @@ insertWithKey' f k v m =  snd (insertLookupWithKey' f k v m)
 
 -- | /O(log n)/. Combine insert with old values retrieval.
 insertLookupWithKey :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> (Maybe v, IntervalMap k v)
-insertLookupWithKey f key value mp  =  key `seq` mapSnd makeBlack (ins mp)
+insertLookupWithKey f key value mp  =  key `seq` (oldval, turnBlack mp')
   where
+    (oldval, mp') = ins mp
     singletonR k v = Node R k k v Nil Nil
     ins Nil = (Nothing, singletonR key value)
     ins (Node color k m v l r) =
@@ -399,8 +394,9 @@ insertLookupWithKey f key value mp  =  key `seq` mapSnd makeBlack (ins mp)
 
 -- | /O(log n)/. Combine insert with old values retrieval.
 insertLookupWithKey' :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> (Maybe v, IntervalMap k v)
-insertLookupWithKey' f key value mp  =  key `seq` mapSnd makeBlack (ins mp)
+insertLookupWithKey' f key value mp  =  key `seq` (oldval, turnBlack mp')
   where
+    (oldval, mp') = ins mp
     singletonR k v = Node R k k v Nil Nil
     ins Nil = value `seq` (Nothing, singletonR key value)
     ins (Node color k m v l r) =
@@ -429,16 +425,6 @@ balanceR B xk xv a (Node R zk _ zv (Node R yk _ yv b c) d) =
 balanceR c xk xv l r = mNode c xk xv l r
 
 
-mNode :: (Ord k) => Color -> Interval k -> v -> IntervalMap k v -> IntervalMap k v -> IntervalMap k v
-mNode c k v l r = Node c k (maxUpper k l r) v l r
-
-maxUpper :: (Ord k) => Interval k -> IntervalMap k v -> IntervalMap k v -> Interval k
-maxUpper k Nil                Nil                = k `seq` k
-maxUpper k Nil                (Node _ _ m _ _ _) = maxByUpper k m
-maxUpper k (Node _ _ m _ _ _) Nil                = maxByUpper k m
-maxUpper k (Node _ _ l _ _ _) (Node _ _ r _ _ _) = maxByUpper k (maxByUpper l r)
-
-
 -- min/max
 
 -- | Returns the smallest key and its associated value.
@@ -465,13 +451,13 @@ data DeleteResult k v = Unchanged !(IntervalMap k v)
 deleteMin :: (Ord k) => IntervalMap k v -> IntervalMap k v
 deleteMin Nil = Nil
 deleteMin mp = case deleteMin' mp of
-                 (Unchanged r, _, _) -> makeBlack r
-                 (Shrunk r, _, _)    -> makeBlack r
+                 (Unchanged r, _, _) -> turnBlack r
+                 (Shrunk r, _, _)    -> turnBlack r
 
 deleteMin' :: Ord k => IntervalMap k v -> (DeleteResult k v, Interval k, v)
 deleteMin' Nil = error "deleteMin': Nil"
 deleteMin' (Node B k _ v Nil Nil) = (Shrunk Nil, k, v)
-deleteMin' (Node B k _ v Nil r@(Node R _ _ _ _ _)) = (Unchanged (makeBlack r), k, v)
+deleteMin' (Node B k _ v Nil r@(Node R _ _ _ _ _)) = (Unchanged (turnBlack r), k, v)
 deleteMin' (Node R k _ v Nil r) = (Unchanged r, k, v)
 deleteMin' (Node c k _ v l r) =
   case deleteMin' l of
@@ -481,7 +467,7 @@ deleteMin' (Node c k _ v l r) =
 deleteMax' :: Ord k => IntervalMap k v -> (DeleteResult k v, Interval k, v)
 deleteMax' Nil = error "deleteMax': Nil"
 deleteMax' (Node B k _ v Nil Nil) = (Shrunk Nil, k, v)
-deleteMax' (Node B k _ v l@(Node R _ _ _ _ _) Nil) = (Unchanged (makeBlack l), k, v)
+deleteMax' (Node B k _ v l@(Node R _ _ _ _ _) Nil) = (Unchanged (turnBlack l), k, v)
 deleteMax' (Node R k _ v l Nil) = (Unchanged l, k, v)
 deleteMax' (Node c k _ v l r) =
   case deleteMax' r of
@@ -491,18 +477,18 @@ deleteMax' (Node c k _ v l r) =
 -- The left tree lacks one Black node
 unbalancedR :: Ord k => Color -> Interval k -> v -> IntervalMap k v -> IntervalMap k v -> DeleteResult k v
 -- Decreasing one Black node in the right
-unbalancedR B k v l r@(Node B _ _ _ _ _) = Shrunk    (balanceR B k v l (turnR r))
-unbalancedR R k v l r@(Node B _ _ _ _ _) = Unchanged (balanceR B k v l (turnR r))
+unbalancedR B k v l r@(Node B _ _ _ _ _) = Shrunk    (balanceR B k v l (turnRed r))
+unbalancedR R k v l r@(Node B _ _ _ _ _) = Unchanged (balanceR B k v l (turnRed r))
 -- Taking one Red node from the right and adding it to the right as Black
 unbalancedR B k v l (Node R rk _ rv rl@(Node B _ _ _ _ _) rr)
-  = Unchanged (mNode B rk rv (balanceR B k v l (turnR rl)) rr)
+  = Unchanged (mNode B rk rv (balanceR B k v l (turnRed rl)) rr)
 unbalancedR _ _ _ _ _ = error "unbalancedR"
 
 unbalancedL :: Ord k => Color -> Interval k -> v -> IntervalMap k v -> IntervalMap k v -> DeleteResult k v
-unbalancedL B k v l@(Node B _ _ _ _ _) r = Shrunk    (balanceL B k v (turnR l) r)
-unbalancedL R k v l@(Node B _ _ _ _ _) r = Unchanged (balanceL B k v (turnR l) r)
+unbalancedL B k v l@(Node B _ _ _ _ _) r = Shrunk    (balanceL B k v (turnRed l) r)
+unbalancedL R k v l@(Node B _ _ _ _ _) r = Unchanged (balanceL B k v (turnRed l) r)
 unbalancedL B k v (Node R lk _ lv ll lr@(Node B _ _ _ _ _)) r
-  = Unchanged (mNode B lk lv ll (balanceL B k v (turnR lr) r))
+  = Unchanged (mNode B lk lv ll (balanceL B k v (turnRed lr) r))
 unbalancedL _ _ _ _ _ = error "unbalancedL"
 
 
@@ -511,18 +497,18 @@ unbalancedL _ _ _ _ _ = error "unbalancedL"
 deleteMax :: (Ord k) => IntervalMap k v -> IntervalMap k v
 deleteMax Nil = Nil
 deleteMax mp = case deleteMax' mp of
-                 (Unchanged r, _ , _) -> makeBlack r
-                 (Shrunk    r, _ , _) -> makeBlack r
+                 (Unchanged r, _ , _) -> turnBlack r
+                 (Shrunk    r, _ , _) -> turnBlack r
 
 deleteFindMin :: (Ord k) => IntervalMap k v -> ((Interval k,v), IntervalMap k v)
 deleteFindMin mp = case deleteMin' mp of
-                     (Unchanged r, k, v) -> ((k,v), makeBlack r)
-                     (Shrunk    r, k, v) -> ((k,v), makeBlack r)
+                     (Unchanged r, k, v) -> ((k,v), turnBlack r)
+                     (Shrunk    r, k, v) -> ((k,v), turnBlack r)
 
 deleteFindMax :: (Ord k) => IntervalMap k v -> ((Interval k,v), IntervalMap k v)
 deleteFindMax mp = case deleteMax' mp of
-                     (Unchanged r, k, v) -> ((k,v), makeBlack r)
-                     (Shrunk    r, k, v) -> ((k,v), makeBlack r)
+                     (Unchanged r, k, v) -> ((k,v), turnBlack r)
+                     (Shrunk    r, k, v) -> ((k,v), turnBlack r)
 
 
 -- folding
@@ -544,8 +530,8 @@ foldlWithKey f i m = go i m
 
 delete :: (Ord k) => Interval k -> IntervalMap k v -> IntervalMap k v
 delete key mp = case delete' key mp of
-                  Unchanged r -> makeBlack r
-                  Shrunk r    -> makeBlack r
+                  Unchanged r -> turnBlack r
+                  Shrunk r    -> turnBlack r
 
 delete' :: Ord k => Interval k -> IntervalMap k v -> DeleteResult k v
 delete' x Nil = x `seq` Unchanged Nil
@@ -564,7 +550,7 @@ delete' x (Node c k _ v l r) =
                    (Shrunk r', rk, rv) -> unbalancedL c rk rv l r'
 
 blackify :: IntervalMap k v -> DeleteResult k v
-blackify s@(Node R _ _ _ _ _) = Unchanged (makeBlack s)
+blackify s@(Node R _ _ _ _ _) = Unchanged (turnBlack s)
 blackify s                    = Shrunk s
 
 
@@ -874,7 +860,7 @@ split x m = (l, r)
 splitLookup :: Ord k => Interval k -> IntervalMap k a -> (IntervalMap k a, Maybe a, IntervalMap k a)
 splitLookup _ Nil = (Nil, Nothing, Nil)
 splitLookup x (Node _ k _ v l r) = case compare x k of
-                                     EQ -> (makeBlack l, Just v, makeBlack r)
+                                     EQ -> (turnBlack l, Just v, turnBlack r)
                                      LT -> let (l', val, r') = splitLookup x l in (l', val, insert k v (union r r'))
                                      GT -> let (l', val, r') = splitLookup x r in (insert k v (union l l'), val, r')
 
@@ -912,18 +898,3 @@ valid mp = ({-# SCC "scc_test" #-} test mp) && height mp <= maxHeight (size mp) 
                                                       else if c == B then rd + 1
                                                       else rd
 
--- --------------------------------
--- helper functions
-
-makeBlack :: IntervalMap k v -> IntervalMap k v
-makeBlack (Node R k m vs l r) = Node B k m vs l r
-makeBlack t = t
-
-mapSnd :: (b -> c) -> (a,b) -> (a,c)
-mapSnd f (x,y) = (x, f y)
-
-
-turnR :: IntervalMap k v -> IntervalMap k v
-turnR Nil = error "turnR"
-turnR (Node B k m v l r) = Node R k m v l r
-turnR t = t
