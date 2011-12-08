@@ -236,6 +236,10 @@ instance (Eq k, Eq v) => Eq (IntervalMap k v) where
 instance (Ord k, Ord v) => Ord (IntervalMap k v) where
   compare a b = compare (toAscList a) (toAscList b)
 
+instance Functor (IntervalMap k) where
+  fmap f m  = map f m
+
+
 isRed :: IntervalMap k v -> Bool
 isRed (Node R _ _ _ _ _) = True
 isRed _ = False
