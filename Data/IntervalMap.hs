@@ -1,4 +1,4 @@
- -- |
+-- |
 -- Module      :  Data.Map
 -- Copyright   :  (c) Christoph Breitkopf 2011
 -- License     :  BSD-style
@@ -224,7 +224,7 @@ data Color = R | B deriving (Eq, Show)
 data IntervalMap k v = Nil
                       | Node !Color
                              !(Interval k) -- key
-                             !(UBound k)   -- max upper in tree
+                             !(Interval k) -- interval with maximum upper in tree
                              v             -- value
                              !(IntervalMap k v) -- left subtree
                              !(IntervalMap k v) -- right subtree
@@ -246,50 +246,29 @@ isRed _ = False
 
 -- -------------------------------------------
 
-data UBound a = Excluding !a
-              | Including !a
-                deriving (Eq)
+-- interval with the greatest upper bound. The lower bound is ignored
+maxByUpper :: Ord a => Interval a -> Interval a -> Interval a
+maxByUpper a b | rightClosed a = if upperBound a >= upperBound b then a else b
+               | otherwise     = if upperBound a >  upperBound b then a else b
 
-instance Ord a => Ord (UBound a) where
-  compare (Excluding a) (Excluding b) = compare a b
-  compare (Excluding a) (Including b) = if a <= b then LT else GT
-  compare (Including a) (Including b) = compare a b
-  compare (Including a) (Excluding b) = if a < b then LT else GT
-
-instance Show a => Show (UBound a) where
-  showsPrec _ (Including x) = showChar '[' . shows x . showChar ']'
-  showsPrec _ (Excluding x) = showChar '(' . shows x . showChar ')'
-
-
-bMax :: Ord a => Interval a -> UBound a -> UBound a
-bMax v x@(Excluding b) = case compare (upperBound v) b of
-                           LT -> x
-                           GT -> uBound v
-                           EQ -> if rightClosed v then Including b else x
-bMax v x@(Including b) = case compare (upperBound v) b of
-                           LT -> x
-                           EQ -> x
-                           GT -> uBound v
-
-
-uBound :: Interval a -> UBound a
-uBound iv | rightClosed iv = Including (upperBound iv)
-          | otherwise      = Excluding (upperBound iv)
-
-greater :: (Ord a) => a -> UBound a -> Bool
-a `greater` Including b  =  a > b
-a `greater` Excluding b  =  a >= b
+-- greater than upper bound?
+greater :: (Ord a) => a -> Interval a -> Bool
+a `greater` iv | rightClosed iv =  a >  upperBound iv
+               | otherwise      =  a >= upperBound iv
 
 less :: (Ord a) => a -> Interval a -> Bool
 a `less` iv | leftClosed iv  =  a <  lowerBound iv
             | otherwise      =  a <= lowerBound iv
 
 -- Interval strictly greater than UBound?
-vGreater :: (Ord a) => Interval a -> UBound a -> Bool
-iv `vGreater` Excluding b  =  lowerBound iv >= b
-iv `vGreater` Including b
-           | leftClosed iv =  lowerBound iv > b
-           | otherwise     =  lowerBound iv >= b
+-- Second argument is an interval trated as ubound
+vGreater :: (Ord a) => Interval a -> Interval a -> Bool
+iv `vGreater` (OpenInterval _ b)   = lowerBound iv >= b
+iv `vGreater` (IntervalCO _ b)     = lowerBound iv >= b
+iv `vGreater` (ClosedInterval _ b) | leftClosed iv = lowerBound iv > b
+                                   | otherwise     = lowerBound iv >= b
+iv `vGreater` (IntervalOC _ b)     | leftClosed iv = lowerBound iv > b
+                                   | otherwise     = lowerBound iv >= b
 
 -- Interval strictly below another interval?
 vLess :: (Ord a) => Interval a -> Interval a -> Bool
@@ -303,7 +282,7 @@ empty =  Nil
 
 -- | A map with one entry.
 singleton :: Interval k -> v -> IntervalMap k v
-singleton k v = Node B k (uBound k) v Nil Nil
+singleton k v = Node B k k v Nil Nil
 
 
 -- | Is the map empty?
@@ -346,7 +325,7 @@ notMember key tree = not (member key tree)
 -- | Look up the given key in the map, returning the value @('Just' value)@,
 -- or 'Nothing if the key is not in the map.
 lookup :: (Ord k) => Interval k -> IntervalMap k v -> Maybe v
-lookup _ Nil  = Nothing
+lookup k Nil =  k `seq` Nothing
 lookup k (Node _ key _ v l r) = case compare k key of
                                   LT -> lookup k l
                                   GT -> lookup k r
@@ -368,7 +347,7 @@ findWithDefault def k m = case lookup k m of
 -- | Return all key/value pairs where the key intervals contain the given point.
 -- The order in which the elements are returned is undefined.
 searchPoint :: (Ord k) => k -> IntervalMap k v -> [(Interval k, v)]
-searchPoint _ Nil = []
+searchPoint p Nil = p `seq` []
 searchPoint p (Node _ k m v l r)
   | p `greater` m   =  []    -- if point is to the right of all intervals in this tree, no result
   | p `less` k      =  searchPoint p l -- if point is to the left of the lower bound, it can't be in the right subtree
@@ -378,7 +357,7 @@ searchPoint p (Node _ k m v l r)
 -- | Return all key/value pairs where the key intervals overlap (intersect) the given interval.
 -- The order in which the elements are returned is undefined.
 searchInterval :: (Ord k) => Interval k -> IntervalMap k v -> [(Interval k, v)]
-searchInterval _ Nil = []
+searchInterval i Nil = i `seq` []
 searchInterval i (Node _ k m v l r)
   | i `vGreater` m  =  []
   | i `vLess` k     =  searchInterval i l
@@ -404,9 +383,9 @@ insertWithKey' f k v m =  snd (insertLookupWithKey' f k v m)
 
 -- | /O(log n)/. Combine insert with old values retrieval.
 insertLookupWithKey :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> (Maybe v, IntervalMap k v)
-insertLookupWithKey f key value mp  =  mapSnd makeBlack (ins mp)
+insertLookupWithKey f key value mp  =  key `seq` mapSnd makeBlack (ins mp)
   where
-    singletonR k v = Node R k (uBound k) v Nil Nil
+    singletonR k v = Node R k k v Nil Nil
     ins Nil = (Nothing, singletonR key value)
     ins (Node color k m v l r) =
       case compare key k of
@@ -420,9 +399,9 @@ insertLookupWithKey f key value mp  =  mapSnd makeBlack (ins mp)
 
 -- | /O(log n)/. Combine insert with old values retrieval.
 insertLookupWithKey' :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> (Maybe v, IntervalMap k v)
-insertLookupWithKey' f key value mp  =  mapSnd makeBlack (ins mp)
+insertLookupWithKey' f key value mp  =  key `seq` mapSnd makeBlack (ins mp)
   where
-    singletonR k v = Node R k (uBound k) v Nil Nil
+    singletonR k v = Node R k k v Nil Nil
     ins Nil = value `seq` (Nothing, singletonR key value)
     ins (Node color k m v l r) =
       case compare key k of
@@ -453,11 +432,11 @@ balanceR c xk xv l r = mNode c xk xv l r
 mNode :: (Ord k) => Color -> Interval k -> v -> IntervalMap k v -> IntervalMap k v -> IntervalMap k v
 mNode c k v l r = Node c k (maxUpper k l r) v l r
 
-maxUpper :: (Ord k) => Interval k -> IntervalMap k v -> IntervalMap k v -> UBound k
-maxUpper k Nil                Nil                = uBound k
-maxUpper k Nil                (Node _ _ m _ _ _) = bMax k m
-maxUpper k (Node _ _ m _ _ _) Nil                = bMax k m
-maxUpper k (Node _ _ l _ _ _) (Node _ _ r _ _ _) = bMax k (max l r)
+maxUpper :: (Ord k) => Interval k -> IntervalMap k v -> IntervalMap k v -> Interval k
+maxUpper k Nil                Nil                = k `seq` k
+maxUpper k Nil                (Node _ _ m _ _ _) = maxByUpper k m
+maxUpper k (Node _ _ m _ _ _) Nil                = maxByUpper k m
+maxUpper k (Node _ _ l _ _ _) (Node _ _ r _ _ _) = maxByUpper k (maxByUpper l r)
 
 
 -- min/max
@@ -478,8 +457,8 @@ findMax Nil = error "IntervalMap.findMin: empty map"
 
 
 -- use our own Either type for readability
-data DeleteResult k v = Unchanged (IntervalMap k v)
-                      | Shrunk (IntervalMap k v)
+data DeleteResult k v = Unchanged !(IntervalMap k v)
+                      | Shrunk !(IntervalMap k v)
 
 
 -- | Remove the smallest key from the map. Return the empty map if the map is empty.
@@ -569,7 +548,7 @@ delete key mp = case delete' key mp of
                   Shrunk r    -> makeBlack r
 
 delete' :: Ord k => Interval k -> IntervalMap k v -> DeleteResult k v
-delete' _ Nil = Unchanged Nil
+delete' x Nil = x `seq` Unchanged Nil
 delete' x (Node c k _ v l r) =
   case compare x k of
     LT -> case delete' x l of
@@ -741,15 +720,15 @@ fromDistinctAscList lyst = case h (length lyst) lyst of
            | otherwise   = buildR n (log2 n) xs
 
     buildB n xs | n == 0     = error "fromDictinctAscList: buildB 0"
-                | n == 1     = case xs of ((k,v):xs') -> (Node B k (uBound k) v Nil Nil, xs')
+                | n == 1     = case xs of ((k,v):xs') -> (Node B k k v Nil Nil, xs')
                 | otherwise  =
                      case n `quot` 2 of { n' ->
                      case buildB n' xs of { (l, (k,v):xs') ->
                      case buildB n' xs' of { (r, xs'') ->
                      (mNode B k v l r, xs'') }}}
 
-    buildR n d xs | n == 0    = (Nil, xs)
-                  | n == 1    = case xs of ((k,v):xs') -> (Node (if d==0 then R else B) k (uBound k) v Nil Nil, xs')
+    buildR n d xs | d `seq` n == 0    = (Nil, xs)
+                  | n == 1    = case xs of ((k,v):xs') -> (Node (if d==0 then R else B) k k v Nil Nil, xs')
                   | otherwise =
                       case n `quot` 2 of { n' ->
                       case buildR n' (d-1) xs of { (l, (k,v):xs') ->
