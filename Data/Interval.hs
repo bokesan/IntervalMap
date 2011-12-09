@@ -17,6 +17,12 @@ module Data.Interval (Interval(..), lowerBound, upperBound, leftClosed, rightClo
 import Control.DeepSeq (NFData(rnf))
 
 -- | Intervals with endpoints of type @a@.
+--
+-- 'Read' and 'Show' use mathematical notation with square brackets for closed
+-- and parens for open intervals.
+-- This is better for human readability, but is not a valid Haskell expression.
+-- Closed intervals look like a list, open intervals look like a tuple,
+-- and half-open intervals look like mismatched parens.
 data Interval a = IntervalCO !a !a      -- ^ Including lower bound, excluding upper
                 | ClosedInterval !a !a  -- ^ Closed at both ends
                 | OpenInterval !a !a    -- ^ Open at both ends
@@ -24,10 +30,37 @@ data Interval a = IntervalCO !a !a      -- ^ Including lower bound, excluding up
                   deriving (Eq)
 
 instance Show a => Show (Interval a) where
-  showsPrec _ iv = showChar open . shows (lowerBound iv) . showChar ','
-                 . shows (upperBound iv) . showChar close
-   where open = if leftClosed iv then '[' else '('
-         close = if rightClosed iv then ']' else ')'
+  showsPrec _ (IntervalCO     a b) = showChar '[' . shows a . showChar ',' . shows b . showChar ')'
+  showsPrec _ (ClosedInterval a b) = showChar '[' . shows a . showChar ',' . shows b . showChar ']'
+  showsPrec _ (OpenInterval   a b) = showChar '(' . shows a . showChar ',' . shows b . showChar ')'
+  showsPrec _ (IntervalOC     a b) = showChar '(' . shows a . showChar ',' . shows b . showChar ']'
+
+instance Read a => Read (Interval a) where
+  readsPrec _ = readParen False
+                  (\r -> [(ClosedInterval a b, w) | ("[", s) <- lex r,
+                                                    (a, t) <- reads s,
+                                                    (",", u) <- lex t,
+                                                    (b, v) <- reads u,
+                                                    ("]", w) <- lex v]
+                         ++
+                         [(OpenInterval   a b, w) | ("(", s) <- lex r,
+                                                    (a, t) <- reads s,
+                                                    (",", u) <- lex t,
+                                                    (b, v) <- reads u,
+                                                    (")", w) <- lex v]
+                         ++
+                         [(IntervalCO     a b, w) | ("[", s) <- lex r,
+                                                    (a, t) <- reads s,
+                                                    (",", u) <- lex t,
+                                                    (b, v) <- reads u,
+                                                    (")", w) <- lex v]
+                         ++
+                         [(IntervalOC     a b, w) | ("(", s) <- lex r,
+                                                    (a, t) <- reads s,
+                                                    (",", u) <- lex t,
+                                                    (b, v) <- reads u,
+                                                    ("]", w) <- lex v]
+                      )
 
 
 instance Ord a => Ord (Interval a) where
