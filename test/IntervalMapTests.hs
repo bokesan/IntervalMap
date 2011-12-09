@@ -202,7 +202,7 @@ prop_insertLookupWithKey' (IMI m) (II i) v =
     (Just old, m') -> M.valid m' && m M.! i == old && m' M.! i == upperBound i + v + old
 
 
-prop_fold (IMI m) = M.fold f z m == foldr f z [ v | (_,v) <- M.toAscList m ]
+prop_foldr (IMI m) = M.foldr f z m == Prelude.foldr f z [ v | (_,v) <- M.toAscList m ]
   where z = []
 	f = (:)
 
@@ -275,7 +275,7 @@ prop_unionWithKey (IMI m1) (IMI m2) =  M.size m' == M.size m1 + numNotInM1 0 (M.
 
 prop_unions (IMI m1) (IMI m2) (IMI m3) = M.unions [m1,m2,m3] == (m1 `M.union` m2 `M.union` m3)
 
-prop_difference (IMI m1) (IMI m2) =  M.valid m' && m' == foldr M.delete m1 (M.keys m2)
+prop_difference (IMI m1) (IMI m2) =  M.valid m' && m' == Prelude.foldr M.delete m1 (M.keys m2)
   where m' = m1 M.\\ m2
 
 prop_intersection (IMI m1) (IMI m2) = M.valid m' && all inBoth (M.keys m')
@@ -359,7 +359,7 @@ main = do
 	  check prop_insertLookupWithKey "insertLookupWithKey"
 	  check prop_insertLookupWithKey' "insertLookupWithKey'"
 	  check prop_map "map"
-	  check prop_fold "fold"
+	  check prop_foldr "foldr"
 	  check prop_fromAscList "fromAscList"
 	  check prop_adjust "adjust"
 	  check prop_update "update"

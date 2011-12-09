@@ -9,10 +9,22 @@
 -- A conservative implementation of Intervals, mostly for use as keys in
 -- a 'Data.IntervalMap'.
 --
-module Data.Interval (Interval(..), lowerBound, upperBound, leftClosed, rightClosed,
-                      isEmpty, overlaps, subsumes, before, after,
-                      below, inside, above
-                     ) where
+-- This should really be a typeclass, so you could have a tuple be an instance
+-- of Interval, but that is currently not possible in standard Haskell.
+--
+-- The contructor names of the half-open intervals seem somewhat clumsy,
+-- and I'm open to suggestions for better names.
+--
+module Data.Interval (
+    -- * Interval type
+    Interval(..),
+    -- * Query
+    lowerBound, upperBound, leftClosed, rightClosed, isEmpty,
+    -- * Interval operations
+    overlaps, subsumes, before, after,
+    -- * Point operations
+    below, inside, above
+  ) where
 
 import Control.DeepSeq (NFData(rnf))
 
@@ -129,20 +141,20 @@ isEmpty :: (Ord a) => Interval a -> Bool
 isEmpty (ClosedInterval a b) = a > b
 isEmpty iv = lowerBound iv >= upperBound iv
 
--- | Interval includes its lower bound?
+-- | Does the interval include its lower bound?
 leftClosed :: Interval a -> Bool
 leftClosed (ClosedInterval _ _) = True
 leftClosed (IntervalCO _ _) = True
 leftClosed _ = False
 
--- | Interval includes its upper bound?
+-- | Does the interval include its upper bound?
 rightClosed :: Interval a -> Bool
 rightClosed (ClosedInterval _ _) = True
 rightClosed (IntervalOC _ _) = True
 rightClosed _ = False
 
 
--- | Do the intervals overlap?
+-- | Do the two intervals overlap?
 overlaps :: (Ord a) => Interval a -> Interval a -> Bool
 
 overlaps (ClosedInterval lo1 hi1) (ClosedInterval lo2 hi2) =  lo1 <= hi2 && hi1 >= lo2
@@ -190,6 +202,7 @@ subsumes (IntervalOC     lo1 hi1) (IntervalCO     lo2 hi2) =  lo1 <  lo2 && hi1 
 subsumes (IntervalOC     lo1 hi1) (IntervalOC     lo2 hi2) =  lo1 <= lo2 && hi1 >= hi2
 
 -- | Interval strictly before another?
+-- True if the upper bound of the first interval is below the lower bound of the second.
 before :: Ord a => Interval a -> Interval a -> Bool
 IntervalCO _ l     `before` r =  l <= lowerBound r
 ClosedInterval _ l `before` IntervalCO r _      =  l < r
@@ -203,6 +216,7 @@ IntervalOC _ l     `before` OpenInterval r _    =  l <= r
 IntervalOC _ l     `before` IntervalOC r _      =  l <= r
                                    
 -- | Interval strictly after another?
+-- Same as 'flip before'.
 after :: Ord a => Interval a -> Interval a -> Bool
 r `after` l = l `before` r
 
@@ -214,14 +228,14 @@ p `inside` (ClosedInterval lo hi) =  lo <= p && p <= hi
 p `inside` (OpenInterval   lo hi) =  lo <  p && p <  hi
 p `inside` (IntervalOC     lo hi) =  lo <  p && p <= hi
 
--- | Point strictly less than lower bound?
+-- | Is a point strictly less than lower bound?
 below :: (Ord a) => a -> Interval a -> Bool
 p `below` (IntervalCO     l _)  =  p <  l
 p `below` (ClosedInterval l _)  =  p <  l
 p `below` (OpenInterval   l _)  =  p <= l
 p `below` (IntervalOC     l _)  =  p <= l
 
--- | Point strictly greater than upper bound?
+-- | Is a point strictly greater than upper bound?
 above :: (Ord a) => a -> Interval a -> Bool
 p `above` (IntervalCO     _ u)  =  p >= u
 p `above` (ClosedInterval _ u)  =  p >  u
