@@ -10,12 +10,6 @@ Maintainer:          chris@chr-breitkopf.de
 -- Copyright:           
 Category:            Data
 Build-type:          Simple
-
--- Extra files to be distributed with the package, such as examples or
--- a README.
--- Extra-source-files:  
-
--- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.8
 
 extra-source-files:
@@ -24,21 +18,11 @@ extra-source-files:
   examples/*.hs
 
 Library
-  -- Modules exported by the library.
   Exposed-modules:     Data.Interval, Data.IntervalMap
-  
-  -- Packages needed in order to build this package.
-  Build-depends:       base, containers
-  
-  -- Modules not exported by this package.
-  -- Other-modules:       
-  
-  -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
-  -- Build-tools:         
-  ghc-options:  -Wall -funbox-strict-fields
+  Build-depends:       base, containers, deepseq
+  ghc-options: -Wall
   if impl(ghc >= 6.8)
     ghc-options: -fwarn-tabs
-
 
 Test-Suite TestInterval
   type:               exitcode-stdio-1.0
@@ -51,8 +35,3 @@ Test-Suite TestIntervalMap
   main-is:            IntervalMapTests.hs
   hs-source-dirs:     test
   build-depends:      IntervalMap, base, QuickCheck, Cabal >= 1.9.2
-
--- source-repository head
---   type:               darcs
---   location:           http://www.chr-breitkopf.de/comp/repos/IntervalMap
-
