@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.1.0
+Version:             0.1.1
 Synopsis:            Maps from Intervals to values, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
 License:             BSD3

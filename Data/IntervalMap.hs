@@ -200,6 +200,9 @@ module Data.IntervalMap (
 import Prelude hiding (null, lookup, map, filter, foldr, foldl)
 import Data.Bits (shiftR, (.&.))
 import Data.Monoid (Monoid(..))
+import Control.Applicative (Applicative(..), (<$>))
+import Data.Traversable (Traversable(traverse))
+import qualified Data.Foldable as Foldable
 import qualified Data.List as L
 import qualified Data.Set as Set
 import Control.DeepSeq (NFData(rnf))
@@ -232,7 +235,6 @@ data IntervalMap k v = Nil
                              v             -- value
                              !(IntervalMap k v) -- left subtree
                              !(IntervalMap k v) -- right subtree
-                        deriving (Read, Show)
 
 instance (Eq k, Eq v) => Eq (IntervalMap k v) where
   a == b = toAscList a == toAscList b
@@ -248,9 +250,32 @@ instance (Ord k) => Monoid (IntervalMap k v) where
     mappend = union
     mconcat = unions
 
+instance Traversable (IntervalMap k) where
+  traverse _ Nil = pure Nil
+  traverse f (Node c k m v l r)
+    = flip (Node c k m) <$> traverse f l <*> f v <*> traverse f r
+
+instance Foldable.Foldable (IntervalMap k) where
+  fold Nil = mempty
+  fold (Node _ _ _ v l r) = Foldable.fold l `mappend` v `mappend` Foldable.fold r
+  foldr = foldr
+  foldl = foldl
+  foldMap _ Nil = mempty
+  foldMap f (Node _ _ _ v l r) = Foldable.foldMap f l `mappend` f v `mappend` Foldable.foldMap f r
+
 instance (NFData k, NFData a) => NFData (IntervalMap k a) where
     rnf Nil = ()
     rnf (Node _ kx _ x l r) = rnf kx `seq` rnf x `seq` rnf l `seq` rnf r
+
+instance (Ord k, Read k, Read e) => Read (IntervalMap k e) where
+  readsPrec p = readParen (p > 10) $ \ r -> do
+    ("fromList",s) <- lex r
+    (xs,t) <- reads s
+    return (fromList xs,t)
+
+instance (Show k, Show a) => Show (IntervalMap k a) where
+  showsPrec d m  = showParen (d > 10) $
+    showString "fromList " . shows (toList m)
 
 
 isRed :: IntervalMap k v -> Bool
