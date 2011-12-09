@@ -1,16 +1,18 @@
 Name:                IntervalMap
 Version:             0.1.0
 Synopsis:            Maps from Intervals to values, with efficient search.
--- Description:         
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
 License:             BSD3
 License-file:        LICENSE
 Author:              Christoph Breitkopf
-Maintainer:          chris@chr-breitkopf.de
--- Copyright:           
+Maintainer:          Christoph Breitkopf <chbreitkopf@googlemail.com>
+Copyright:           Copyright 2011 Christoph Breitkopf
 Category:            Data
 Build-type:          Simple
 Cabal-version:       >=1.8
+Description:
+                     A map from intervals to values, with efficient search
+                     for all keys containing a point or overlapping an interval.
 
 extra-source-files:
   README
@@ -19,7 +21,7 @@ extra-source-files:
 
 Library
   Exposed-modules:     Data.Interval, Data.IntervalMap
-  Build-depends:       base, containers, deepseq
+  Build-depends:       base >= 4 && < 5, containers, deepseq
   ghc-options: -Wall
   if impl(ghc >= 6.8)
     ghc-options: -fwarn-tabs
