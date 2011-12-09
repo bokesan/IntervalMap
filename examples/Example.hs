@@ -10,7 +10,7 @@ type TimeSpan = Interval Time
 
 -- We have a time span include its start time but not its end time.
 mkTimeSpan :: Time -> Time -> TimeSpan
-mkTimeSpan from to = HalfOpenIntervalCO from to
+mkTimeSpan from to = IntervalCO from to
 
 type Appointments = IM.IntervalMap Time [(Person, Details)]
 
