@@ -200,6 +200,8 @@ import Prelude hiding (null, lookup, map, filter)
 import Data.Bits (shiftR, (.&.))
 import qualified Data.List as L
 import qualified Data.Set as Set
+import Control.DeepSeq (NFData(rnf))
+
 import Data.Interval
 
 {--------------------------------------------------------------------
@@ -239,6 +241,9 @@ instance (Ord k, Ord v) => Ord (IntervalMap k v) where
 instance Functor (IntervalMap k) where
   fmap f m  = map f m
 
+instance (NFData k, NFData a) => NFData (IntervalMap k a) where
+    rnf Nil = ()
+    rnf (Node _ kx _ x l r) = rnf kx `seq` rnf x `seq` rnf l `seq` rnf r
 
 isRed :: IntervalMap k v -> Bool
 isRed (Node R _ _ _ _ _) = True

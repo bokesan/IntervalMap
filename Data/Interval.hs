@@ -14,6 +14,8 @@ module Data.Interval (Interval(..), lowerBound, upperBound, leftClosed, rightClo
                       below, inside, above
                      ) where
 
+import Control.DeepSeq (NFData(rnf))
+
 -- | Intervals with endpoints of type @a@.
 data Interval a = IntervalCO !a !a      -- ^ Including lower bound, excluding upper
                 | ClosedInterval !a !a  -- ^ Closed at both ends
@@ -26,19 +28,6 @@ instance Show a => Show (Interval a) where
                  . shows (upperBound iv) . showChar close
    where open = if leftClosed iv then '[' else '('
          close = if rightClosed iv then ']' else ')'
-
-
--- | Interval includes its lower bound?
-leftClosed :: Interval a -> Bool
-leftClosed (ClosedInterval _ _) = True
-leftClosed (IntervalCO _ _) = True
-leftClosed _ = False
-
--- | Interval includes its upper bound?
-rightClosed :: Interval a -> Bool
-rightClosed (ClosedInterval _ _) = True
-rightClosed (IntervalOC _ _) = True
-rightClosed _ = False
 
 
 instance Ord a => Ord (Interval a) where
@@ -73,6 +62,20 @@ cmpOC__, cmpCO__ :: Ord a => a -> a -> Ordering
 cmpOC__ a c     = if a < c then LT else GT
 cmpCO__ a c     = if a <= c then LT else GT
 
+
+instance Functor Interval where
+  fmap f (IntervalCO     a b) = IntervalCO     (f a) (f b)
+  fmap f (ClosedInterval a b) = ClosedInterval (f a) (f b)
+  fmap f (OpenInterval   a b) = OpenInterval   (f a) (f b)
+  fmap f (IntervalOC     a b) = IntervalOC     (f a) (f b)
+
+instance NFData a => NFData (Interval a) where
+  rnf (IntervalCO     a b) = rnf a `seq` rnf b
+  rnf (ClosedInterval a b) = rnf a `seq` rnf b
+  rnf (OpenInterval   a b) = rnf a `seq` rnf b
+  rnf (IntervalOC     a b) = rnf a `seq` rnf b
+
+
 -- | Get the lower bound.
 lowerBound :: Interval a -> a
 lowerBound (ClosedInterval lo _) = lo
@@ -92,6 +95,18 @@ upperBound (IntervalOC _ hi) = hi
 isEmpty :: (Ord a) => Interval a -> Bool
 isEmpty (ClosedInterval a b) = a > b
 isEmpty iv = lowerBound iv >= upperBound iv
+
+-- | Interval includes its lower bound?
+leftClosed :: Interval a -> Bool
+leftClosed (ClosedInterval _ _) = True
+leftClosed (IntervalCO _ _) = True
+leftClosed _ = False
+
+-- | Interval includes its upper bound?
+rightClosed :: Interval a -> Bool
+rightClosed (ClosedInterval _ _) = True
+rightClosed (IntervalOC _ _) = True
+rightClosed _ = False
 
 
 -- | Do the intervals overlap?
