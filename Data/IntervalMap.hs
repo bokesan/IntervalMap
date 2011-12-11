@@ -2,7 +2,7 @@
 -- Module      :  Data.Map
 -- Copyright   :  (c) Christoph Breitkopf 2011
 -- License     :  BSD-style
--- Maintainer  :  chris@chr-breitkopf.de
+-- Maintainer  :  chbreitkopf@googlemail.com
 -- Stability   :  experimental
 -- Portability :  portable
 --
@@ -44,6 +44,9 @@
 -- (c) Daan Leijen 2002, (c) Andriy Palamarchuk 2008.
 -- The red-black tree deletion is based on code from llrbtree by Kazu Yamamoto.
 -- Of course, any errors are mine.
+--
+-- If this module does not meet your needs, also check Data.SegmentTree, which
+-- implements a similar data structure.
 --
 module Data.IntervalMap (
             -- * re-export
