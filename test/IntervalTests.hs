@@ -6,7 +6,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
 import Control.Monad (liftM)
 
-import Data.Interval
+import Data.IntervalMap.Interval
 
 
 c15, o15, co15, oc15 :: Interval Int

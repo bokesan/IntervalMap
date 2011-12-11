@@ -8,7 +8,7 @@ import Data.List ((\\), sort)
 import Control.Monad (liftM, foldM)
 
 import Data.IntervalMap as M
-import Data.Interval
+import Data.IntervalMap.Interval
 
 
 newtype IMI = IMI (IntervalMap Int Int) deriving (Show)

@@ -1,5 +1,5 @@
 -- |
--- Module      :  Data.Interval
+-- Module      :  Data.IntervalMap.Interval
 -- Copyright   :  (c) Christoph Breitkopf 2011
 -- License     :  BSD-style
 -- Maintainer  :  chris@chr-breitkopf.de
@@ -15,7 +15,7 @@
 -- The contructor names of the half-open intervals seem somewhat clumsy,
 -- and I'm open to suggestions for better names.
 --
-module Data.Interval (
+module Data.IntervalMap.Interval (
     -- * Interval type
     Interval(..),
     -- * Query

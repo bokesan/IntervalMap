@@ -210,7 +210,7 @@ import qualified Data.List as L
 import qualified Data.Set as Set
 import Control.DeepSeq (NFData(rnf))
 
-import Data.Interval
+import Data.IntervalMap.Interval
 
 {--------------------------------------------------------------------
   Operators
