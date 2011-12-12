@@ -306,8 +306,11 @@ maxUpper k (Node _ _ l _ _ _) (Node _ _ r _ _ _) = maxByUpper k (maxByUpper l r)
 
 -- interval with the greatest upper bound. The lower bound is ignored!
 maxByUpper :: Ord a => Interval a -> Interval a -> Interval a
-maxByUpper a b | rightClosed a = if upperBound a >= upperBound b then a else b
-               | otherwise     = if upperBound a >  upperBound b then a else b
+maxByUpper a@(IntervalCO     _ u) b = if u >  upperBound b then a else b
+maxByUpper a@(ClosedInterval _ u) b = if u >= upperBound b then a else b
+maxByUpper a@(OpenInterval   _ u) b = if u >  upperBound b then a else b
+maxByUpper a@(IntervalOC     _ u) b = if u >= upperBound b then a else b
+
 
 -- ---------------------------------------------------------
 
@@ -329,8 +332,9 @@ null _   = False
 size :: IntervalMap k v -> Int
 size t = h 0 t
   where
-    h n Nil = n
-    h n (Node _ _ _ _ l r) = let n' = n + size l + 1 in n' `seq` h n' r
+    h n m = n `seq` case m of
+                      Nil -> n
+                      Node _ _ _ _ l r -> h (h n l + 1) r
 
 -- | The height of the tree. For testing/debugging only.
 height :: IntervalMap k v -> Int
@@ -403,6 +407,7 @@ searchInterval i (Node _ k m v l r)
 -- changed to the new value.
 insert :: (Ord k) => Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insert =  insertWithKey' (\_ v _ -> v)
+{-# INLINE insert #-}
 
 -- | Insert with a function, combining new value and old value.
 -- @'insertWith' f key value mp@ 
@@ -411,11 +416,13 @@ insert =  insertWithKey' (\_ v _ -> v)
 -- insert the pair @(key, f new_value old_value)@.
 insertWith :: (Ord k) => (v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insertWith f = insertWithKey (\_ new old -> f new old)
+{-# INLINE insertWith #-}
 
 -- | Same as 'insertWith', but the combining function is applied strictly.
 -- This is often the most desirable behavior.
 insertWith' :: (Ord k) => (v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insertWith' f = insertWithKey' (\_ new old -> f new old)
+{-# INLINE insertWith' #-}
 
 -- | Insert with a function, combining key, new value and old value.
 -- @'insertWithKey' f key value mp@ 
@@ -425,10 +432,12 @@ insertWith' f = insertWithKey' (\_ new old -> f new old)
 -- Note that the key passed to f is the same key passed to 'insertWithKey'.
 insertWithKey :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insertWithKey f k v m =  snd (insertLookupWithKey f k v m)
+{-# INLINE insertWithKey #-}
 
 -- | Same as 'insertWithKey', but the combining function is applied strictly.
 insertWithKey' :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insertWithKey' f k v m =  snd (insertLookupWithKey' f k v m)
+{-# INLINE insertWithKey' #-}
 
 -- | Combine insert with old values retrieval.
 insertLookupWithKey :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> (Maybe v, IntervalMap k v)
@@ -662,6 +671,7 @@ blackify s                    = Shrunk s
 -- a member of the map, the original map is returned.
 adjust :: Ord k => (a -> a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 adjust f k m = adjustWithKey (\_ v -> f v) k m
+{-# INLINE adjust #-}
 
 -- | Adjust a value at a specific key. When the key is not
 -- a member of the map, the original map is returned.
@@ -678,6 +688,7 @@ adjustWithKey f x (Node c k m v l r) =
 -- deleted. If it is (@'Just' y@), the key @k@ is bound to the new value @y@.
 update :: Ord k => (a -> Maybe a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 update f k m = updateWithKey (\_ v -> f v) k m
+{-# INLINE update #-}
 
 -- | The expression (@'updateWithKey' f k map@) updates the
 -- value @x@ at @k@ (if it is in the map). If (@f k x@) is 'Nothing',
@@ -714,10 +725,12 @@ alter f x m = case lookup x m of
 -- i.e. (@'union' == 'unionWith' 'const'@).
 union :: Ord k => IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 union m1 m2 = unionWith const m1 m2
+{-# INLINE union #-}
 
 -- | Union with a combining function.
 unionWith :: Ord k => (a -> a -> a) -> IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 unionWith f m1 m2 = unionWithKey (\_ v1 v2 -> f v1 v2) m1 m2
+{-# INLINE unionWith #-}
 
 -- | Union with a combining function.
 unionWithKey :: Ord k => (Interval k -> a -> a -> a) -> IntervalMap k a -> IntervalMap k a -> IntervalMap k a
@@ -882,8 +895,8 @@ fromDistinctAscList lyst = case h (length lyst) lyst of
 -- is n a perfect binary tree size (2^m-1)?
 isPerfect :: Int -> Bool
 isPerfect n = (n .&. (n + 1)) == 0
+{-# INLINE isPerfect #-}
 
--- It's not worthwile to optimize this, as it's just called once in fromDistinctAscList.
 log2 :: Int -> Int
 log2 m = h (-1) m
   where
@@ -906,12 +919,14 @@ keysSet m =  Set.fromList (keys m)
 -- | Same as 'toList'.
 assocs :: IntervalMap k v -> [(Interval k, v)]
 assocs m = toList m
+{-# INLINE assocs #-}
 
 -- --- Mapping ---
 
 -- | /O(n)/. Map a function over all values in the map.
 map :: (a -> b) -> IntervalMap k a -> IntervalMap k b
 map f = mapWithKey (\_ x -> f x)
+{-# INLINE map #-}
 
 -- | /O(n)/. Map a function over all values in the map.
 mapWithKey :: (Interval k -> a -> b) -> IntervalMap k a -> IntervalMap k b
@@ -926,8 +941,8 @@ mapWithKey f = go
 -- > let f a b = (a ++ b, b ++ "X")
 -- > mapAccum f "Everything: " (fromList [(5,"a"), (3,"b")]) == ("Everything: ba", fromList [(3, "bX"), (5, "aX")])
 mapAccum :: (a -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
-mapAccum f a m
-  = mapAccumWithKey (\a' _ x' -> f a' x') a m
+mapAccum f a m = mapAccumWithKey (\a' _ x' -> f a' x') a m
+{-# INLINE mapAccum #-}
 
 -- | /O(n)/. The function 'mapAccumWithKey' threads an accumulating
 -- argument through the map in ascending order of keys.
@@ -935,8 +950,8 @@ mapAccum f a m
 -- > let f a k b = (a ++ " " ++ (show k) ++ "-" ++ b, b ++ "X")
 -- > mapAccumWithKey f "Everything:" (fromList [(5,"a"), (3,"b")]) == ("Everything: 3-b 5-a", fromList [(3, "bX"), (5, "aX")])
 mapAccumWithKey :: (a -> Interval k -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
-mapAccumWithKey f a t
-  = mapAccumL f a t
+mapAccumWithKey f a t = mapAccumL f a t
+{-# INLINE mapAccumWithKey #-}
 
 -- | /O(n)/. The function 'mapAccumL' threads an accumulating
 -- argument throught the map in ascending order of keys.
