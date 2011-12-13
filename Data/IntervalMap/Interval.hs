@@ -22,6 +22,7 @@ module Data.IntervalMap.Interval (
     lowerBound, upperBound, leftClosed, rightClosed, isEmpty,
     -- * Interval operations
     overlaps, subsumes, before, after,
+    compareByUpper,
     -- * Point operations
     below, inside, above
   ) where
@@ -132,6 +133,11 @@ instance NFData a => NFData (Interval a) where
   rnf (OpenInterval   a b) = rnf a `seq` rnf b
   rnf (IntervalOC     a b) = rnf a `seq` rnf b
 
+-- | Like 'compare', but considering the upper bound first.
+compareByUpper :: Ord a => Interval a -> Interval a -> Ordering
+compareByUpper a b = case compareU a b of
+                       EQ -> compareL a b
+                       r  -> r
 
 -- | Get the lower bound.
 lowerBound :: Interval a -> a

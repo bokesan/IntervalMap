@@ -4,7 +4,7 @@ import System.Exit (exitSuccess, exitFailure)
 
 import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
-import Data.List ((\\), sort)
+import Data.List ((\\), sort, sortBy)
 import Control.Monad (liftM, foldM)
 
 import Data.IntervalMap as M
@@ -178,6 +178,14 @@ prop_findMax (IMI m) = not (M.null m) ==> let x = maximum (M.toList m)
 					     M.valid m' &&
 					     sameElements (M.toList m Data.List.\\ [x]) (M.toList m') &&
 					     sameElements (M.toList m Data.List.\\ [x]) (M.toList (M.deleteMax m))
+
+prop_findLast (IMI m) = not (M.null m) ==>
+                         M.findLast m == head (sortBy cmp (M.toList m))
+                        where cmp (a,_) (b,_) = invert (compareByUpper a b)
+                              invert LT = GT
+                              invert GT = LT
+                              invert EQ = EQ
+
 
 prop_insertWith (IMI m) (II i) v = let m' = M.insertWith (\new old -> new + old) i v m in
                                    if M.member i m then

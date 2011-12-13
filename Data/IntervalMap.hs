@@ -178,6 +178,7 @@ module Data.IntervalMap (
             -- * Min\/Max
             , findMin
             , findMax
+            , findLast
             , deleteMin
             , deleteMax
             , deleteFindMin
@@ -522,6 +523,20 @@ findMax :: IntervalMap k v -> (Interval k, v)
 findMax (Node _ k _ v _ Nil) = (k,v)
 findMax (Node _ _ _ _ _ r) = findMax r
 findMax Nil = error "IntervalMap.findMin: empty map"
+
+-- | Returns the interval with the largest endpoint.
+-- If there is more than one interval with that endpoint,
+-- return the rightmost.
+findLast :: Eq k => IntervalMap k v -> (Interval k, v)
+findLast Nil = error "IntervalMap.findLast: empty map"
+findLast t@(Node _ _ mx _ _ _) = lastMax
+  where
+    (lastMax : _) = go t
+    go Nil = []
+    go (Node _ k m v l r) | sameU m mx = if sameU k m then go r ++ ((k,v) : go l)
+                                                      else go r ++ go l
+                          | otherwise  = []
+    sameU a b = upperBound a == upperBound b && rightClosed a == rightClosed b
 
 
 -- use our own Either type for readability
