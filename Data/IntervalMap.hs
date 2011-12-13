@@ -68,6 +68,7 @@ module Data.IntervalMap (
             -- ** Interval query
             , searchPoint
             , searchInterval
+            , searchWithin
             
             -- * Construction
             , empty
@@ -386,22 +387,39 @@ findWithDefault def k m = case lookup k m of
 -- | Return all key/value pairs where the key intervals contain the given point.
 -- The order in which the elements are returned is undefined.
 searchPoint :: (Ord k) => k -> IntervalMap k v -> [(Interval k, v)]
-searchPoint p Nil = p `seq` []
-searchPoint p (Node _ k m v l r)
-  | p `above` m  =  []    -- if point is to the right of all intervals in this tree, no result
-  | p `below` k  =  searchPoint p l -- if point is to the left of the lower bound, it can't be in the right subtree
-  | p `inside` k =  (k,v) : searchPoint p l ++ searchPoint p r
-  | otherwise    =          searchPoint p l ++ searchPoint p r
+searchPoint pt t = go [] pt t
+  where
+    go xs p Nil = p `seq` xs
+    go xs p (Node _ k m v l r)
+       | p `above` m  =  xs         -- above all interval in the tree: no result
+       | p `below` k  =  go xs p l  -- to the left of the lower bound: can't be in right subtree
+       | p `inside` k =  go ((k,v) : go xs p r) p l
+       | otherwise    =  go (go xs p r) p l
 
 -- | Return all key/value pairs where the key intervals overlap (intersect) the given interval.
 -- The order in which the elements are returned is undefined.
 searchInterval :: (Ord k) => Interval k -> IntervalMap k v -> [(Interval k, v)]
-searchInterval i Nil = i `seq` []
-searchInterval i (Node _ k m v l r)
-  | i `after` m     =  []
-  | i `before` k    =  searchInterval i l
-  | i `overlaps` k  =  (k,v) : searchInterval i l ++ searchInterval i r
-  | otherwise       =          searchInterval i l ++ searchInterval i r
+searchInterval iv t = go [] iv t
+  where
+    go xs i Nil = i `seq` xs
+    go xs i (Node _ k m v l r)
+       | i `after` m     =  xs
+       | i `before` k    =  go xs i l
+       | i `overlaps` k  =  go ((k,v) : go xs i r) i l
+       | otherwise       =  go (go xs i r) i l
+
+-- | Return all key/value pairs where the key intervals are completely inside the given interval.
+-- The order in which the elements are returned is undefined.
+searchWithin :: (Ord k) => Interval k -> IntervalMap k v -> [(Interval k, v)]
+searchWithin iv t = go [] iv t
+  where
+    go xs i Nil = i `seq` xs
+    go xs i (Node _ k m v l r)
+       | i `after` m     =  xs
+       | i `before` k    =  go xs i l
+       | i `subsumes` k  =  go ((k,v) : go xs i r) i l
+       | otherwise       =  go (go xs i r) i l
+
 
 -- | Insert a new key/value pair. If the map already contains the key, its value is
 -- changed to the new value.
