@@ -179,11 +179,11 @@ module Data.IntervalMap (
             , deleteMax
             , deleteFindMin
             , deleteFindMax
-            {-
             , updateMin
             , updateMax
             , updateMinWithKey
             , updateMaxWithKey
+            {-
             , minView
             , maxView
             , minViewWithKey
@@ -604,6 +604,41 @@ deleteFindMax :: (Ord k) => IntervalMap k v -> ((Interval k,v), IntervalMap k v)
 deleteFindMax mp = case deleteMax' mp of
                      (Unchanged r, k, v) -> ((k,v), turnBlack r)
                      (Shrunk    r, k, v) -> ((k,v), turnBlack r)
+
+-- | Update or delete value at minimum key.
+updateMin :: Ord k => (v -> Maybe v) -> IntervalMap k v -> IntervalMap k v
+updateMin f m = updateMinWithKey (\_ v -> f v) m
+
+-- | Update or delete value at maximum key.
+updateMax :: Ord k => (v -> Maybe v) -> IntervalMap k v -> IntervalMap k v
+updateMax f m = updateMaxWithKey (\_ v -> f v) m
+
+-- | Update or delete value at minimum key.
+updateMinWithKey :: Ord k => (Interval k -> v -> Maybe v) -> IntervalMap k v -> IntervalMap k v
+updateMinWithKey _ Nil = Nil
+updateMinWithKey f m = let (k,v) = findMin m in
+                       case f k v of
+                         Just v' -> setMinValue v' m
+                         Nothing -> deleteMin m
+
+-- | Update or delete value at maximum key.
+updateMaxWithKey :: Ord k => (Interval k -> v -> Maybe v) -> IntervalMap k v -> IntervalMap k v
+updateMaxWithKey _ Nil = Nil
+updateMaxWithKey f m = let (k,v) = findMax m in
+                       case f k v of
+                         Just v' -> setMaxValue v' m
+                         Nothing -> deleteMax m
+
+setMinValue :: v -> IntervalMap k v -> IntervalMap k v
+setMinValue _  Nil = Nil
+setMinValue v' (Node c k m v Nil r) = Node c k m v' Nil r
+setMinValue v' (Node c k m v l   r) = Node c k m v (setMinValue v' l) r
+
+setMaxValue :: v -> IntervalMap k v -> IntervalMap k v
+setMaxValue _  Nil = Nil
+setMaxValue v' (Node c k m v l Nil) = Node c k m v' l Nil
+setMaxValue v' (Node c k m v l r)   = Node c k m v l (setMaxValue v' r)
+
 
 
 -- folding

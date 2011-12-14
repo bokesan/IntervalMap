@@ -150,6 +150,52 @@ prop_max (IMI m) = if M.null m then M.null (M.deleteMax m) else
 				      in notMember k m' && M.size m == M.size m' + 1
 					 && k == maximum (M.keys m) && valid m'
 
+prop_updateMin_u (IMI m) =
+   let m' = M.updateMin (\v -> Just (v+1)) m in
+   if M.null m then
+      M.null m'
+   else
+      let (k, v) = M.findMin m
+          (k', v') = M.findMin m'
+      in
+      M.valid m' &&
+      M.size m' == M.size m &&
+      k' == k &&
+      v' == v + 1
+
+prop_updateMin_d (IMI m) =
+   let m' = M.updateMin (const Nothing) m in
+   if M.null m then
+      M.null m'
+   else
+      let (k,v) = M.findMin m in
+      M.valid m' &&
+      M.size m' == M.size m - 1 &&
+      M.notMember k m'
+
+prop_updateMax_u (IMI m) =
+   let m' = M.updateMax (\v -> Just (v+1)) m in
+   if M.null m then
+      M.null m'
+   else
+      let (k, v) = M.findMax m
+          (k', v') = M.findMax m'
+      in
+      M.valid m' &&
+      M.size m' == M.size m &&
+      k' == k &&
+      v' == v + 1
+
+prop_updateMax_d (IMI m) =
+   let m' = M.updateMax (const Nothing) m in
+   if M.null m then
+      M.null m'
+   else
+      let (k,v) = M.findMax m in
+      M.valid m' &&
+      M.size m' == M.size m - 1 &&
+      M.notMember k m'
+
 prop_map (IMI m) = let m' = M.map (1+) m in
                     M.valid m' &&
                     M.size m' == M.size m &&
@@ -366,6 +412,10 @@ main = do
           check prop_within "within"
 	  check prop_findMin "findMin"
 	  check prop_findMax "findMax"
+          check prop_updateMin_u "updateMin update"
+          check prop_updateMin_d "updateMin delete"
+          check prop_updateMax_u "updateMax update"
+          check prop_updateMax_d "updateMax delete"
 	  check prop_insertWith "insertWith"
           check prop_insertWith' "insertWith'"
 	  check prop_insertLookupWithKey "insertLookupWithKey"
