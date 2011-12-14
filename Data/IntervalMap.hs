@@ -1,5 +1,5 @@
 -- |
--- Module      :  Data.Map
+-- Module      :  Data.IntervalMap
 -- Copyright   :  (c) Christoph Breitkopf 2011
 -- License     :  BSD-style
 -- Maintainer  :  chbreitkopf@googlemail.com
@@ -23,14 +23,13 @@
 -- Index-based access and some set functions have not been implemented, and many non-core
 -- functions, for example the set operations, have not been tuned for efficiency yet.
 --
--- In addition, there is a function 'searchPoint' for searching all keys that contain
--- a point (stabbing query), and a function 'searchInterval' for all keys overlapping
--- the given interval.
+-- In addition, there are functions specific to maps of intervals, for example to search
+-- for all keys containing a given point or contained in a given interval.
 --
 -- To stay compatible with standard Haskell, this implementation uses a fixed data
 -- type for intervals, and not a multi-parameter type class. Thus, it's currently
 -- not possible to define e.g. a 2-tuple as an instance of interval and use that
--- map key. Instead you must convert your keys to Data.Interval.
+-- map key. Instead you must convert your keys to 'Data.IntervalMap.Interval'.
 --
 -- Closed, open, and half-open intervals can be contained in the same map.
 --
@@ -44,9 +43,6 @@
 -- (c) Daan Leijen 2002, (c) Andriy Palamarchuk 2008.
 -- The red-black tree deletion is based on code from llrbtree by Kazu Yamamoto.
 -- Of course, any errors are mine.
---
--- If this module does not meet your needs, also check Data.SegmentTree, which
--- implements a similar data structure.
 --
 module Data.IntervalMap (
             -- * re-export
