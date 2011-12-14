@@ -66,9 +66,9 @@ module Data.IntervalMap (
             , findWithDefault
 
             -- ** Interval query
-            , searchPoint
-            , searchInterval
-            , searchWithin
+            , containing
+            , intersecting
+            , within
             
             -- * Construction
             , empty
@@ -386,9 +386,9 @@ findWithDefault def k m = case lookup k m of
     Just x  -> x
 
 -- | Return all key/value pairs where the key intervals contain the given point.
--- The order in which the elements are returned is undefined.
-searchPoint :: (Ord k) => k -> IntervalMap k v -> [(Interval k, v)]
-searchPoint pt t = go [] pt t
+-- The elements are returned in ascending key order.
+containing :: (Ord k) => IntervalMap k v -> k -> [(Interval k, v)]
+t `containing` pt = go [] pt t
   where
     go xs p Nil = p `seq` xs
     go xs p (Node _ k m v l r)
@@ -399,8 +399,8 @@ searchPoint pt t = go [] pt t
 
 -- | Return all key/value pairs where the key intervals overlap (intersect) the given interval.
 -- The order in which the elements are returned is undefined.
-searchInterval :: (Ord k) => Interval k -> IntervalMap k v -> [(Interval k, v)]
-searchInterval iv t = go [] iv t
+intersecting :: (Ord k) => IntervalMap k v -> Interval k -> [(Interval k, v)]
+t `intersecting` iv = go [] iv t
   where
     go xs i Nil = i `seq` xs
     go xs i (Node _ k m v l r)
@@ -411,8 +411,8 @@ searchInterval iv t = go [] iv t
 
 -- | Return all key/value pairs where the key intervals are completely inside the given interval.
 -- The order in which the elements are returned is undefined.
-searchWithin :: (Ord k) => Interval k -> IntervalMap k v -> [(Interval k, v)]
-searchWithin iv t = go [] iv t
+within :: (Ord k) => IntervalMap k v -> Interval k -> [(Interval k, v)]
+t `within` iv = go [] iv t
   where
     go xs i Nil = i `seq` xs
     go xs i (Node _ k m v l r)

@@ -46,7 +46,7 @@ prop_tests1 =
   Just "single46" == M.lookup (ClosedInterval 4 6) single46 &&
   "single46" == single46 M.! ClosedInterval 4 6 &&
   Nothing == M.lookup (OpenInterval 4 6) single46 &&
-  [(ClosedInterval 4 6, "single46")] == M.searchPoint 5 single46
+  [(ClosedInterval 4 6, "single46")] == single46 `containing` 5
 
 
 bal3 :: M.IntervalMap Int String
@@ -66,17 +66,17 @@ prop_tests2 =
   "o58" == bal3' M.! OpenInterval 5 8 &&
   Nothing == M.lookup (OpenInterval 5 8) bal3 &&
   Just "o58" == M.lookup (OpenInterval 5 8) bal3' &&
-  [] == M.searchPoint 0 bal3 &&
-  [] == M.searchPoint 9 bal3 &&
-  [(ClosedInterval 1 4, "14")] == M.searchPoint 1 bal3 &&
-  [(ClosedInterval 5 8, "58")] == M.searchPoint 8 bal3 &&
-  [] == M.searchPoint 8 bal3' &&
-  [(OpenInterval 5 8, "o58")] == M.searchPoint 7 bal3' &&
-  sameElements ["14", "single46"] [v|(_,v) <- M.searchPoint 4 bal3] &&
-  sameElements ["58", "single46"] [v|(_,v) <- M.searchPoint 5 bal3] &&
-  sameElements ["58", "single46"] [v|(_,v) <- M.searchPoint 6 bal3] &&
-  sameElements ["single46"] [v|(_,v) <- M.searchPoint 5 bal3'] &&
-  sameElements ["o58", "single46"] [v|(_,v) <- M.searchPoint 6 bal3']
+  [] == bal3 `containing` 0 &&
+  [] == bal3 `containing` 9 &&
+  [(ClosedInterval 1 4, "14")] == bal3 `containing` 1 &&
+  [(ClosedInterval 5 8, "58")] == bal3 `containing` 8 &&
+  [] == bal3' `containing` 8 &&
+  [(OpenInterval 5 8, "o58")] == bal3' `containing` 7 &&
+  sameElements ["14", "single46"] [v|(_,v) <- bal3 `containing` 4] &&
+  sameElements ["58", "single46"] [v|(_,v) <- bal3 `containing` 5] &&
+  sameElements ["58", "single46"] [v|(_,v) <- bal3 `containing` 6] &&
+  sameElements ["single46"] [v|(_,v) <- bal3' `containing` 5] &&
+  sameElements ["o58", "single46"] [v|(_,v) <- bal3' `containing` 6]
 
 
 deep100L :: M.IntervalMap Int Int
@@ -92,11 +92,11 @@ deep100R = construct 1 M.empty
 
 prop_tests3 =
    68 == deep100L M.! (ClosedInterval 68 68) &&
-   [17] == Prelude.map snd (M.searchPoint 17 deep100L) &&
+   [17] == Prelude.map snd (deep100L `containing` 17) &&
    100 == M.size deep100L &&
    (M.height deep100L <= 12) &&
    68 == deep100R M.! (ClosedInterval 68 68) &&
-   [17] == Prelude.map snd (M.searchPoint 17 deep100R) &&
+   [17] == Prelude.map snd (deep100R `containing` 17) &&
    100 == M.size deep100R &&
    (M.height deep100R <= 12) &&
    M.valid deep100L &&
@@ -157,11 +157,14 @@ prop_map (IMI m) = let m' = M.map (1+) m in
 
 prop_findWithDefault (IMI m) (II k) = M.findWithDefault (lowerBound k) k m == lowerBound k
 
-prop_searchPoint (IMI m) p = sameElements (M.searchPoint p m)
+prop_searchPoint (IMI m) p = sameElements (m `containing` p)
                                           [e | e@(k,_) <- M.toList m, p `inside` k]
 
-prop_searchInterval (IMI m) (II i) = sameElements (M.searchInterval i m)
+prop_searchInterval (IMI m) (II i) = sameElements (m `intersecting` i)
 				                  [e | e@(k,_) <- M.toList m, k `overlaps` i]
+
+prop_within (IMI m) (II i) = sameElements (m `M.within` i)
+                                          [e | e@(k,_) <- M.toList m, i `subsumes` k]
 
 prop_findMin (IMI m) = not (M.null m) ==> let x = minimum (M.toList m)
 					      (y,m') = M.deleteFindMin m
@@ -360,6 +363,7 @@ main = do
 	  check prop_findWithDefault "findWithDefault"
 	  check prop_searchPoint "searchPoint"
 	  check prop_searchInterval "searchInterval"
+          check prop_within "within"
 	  check prop_findMin "findMin"
 	  check prop_findMax "findMax"
 	  check prop_insertWith "insertWith"
