@@ -729,6 +729,7 @@ update f k m = updateWithKey (\_ v -> f v) k m
 -- to the new value @y@.
 updateWithKey :: Ord k => (Interval k -> a -> Maybe a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 updateWithKey f k m = snd (updateLookupWithKey f k m)
+{-# INLINE updateWithKey #-}
 
 -- | Lookup and update. See also 'updateWithKey'.
 -- The function returns changed value, if it is updated.
@@ -783,6 +784,7 @@ unionsWith f = L.foldl (unionWith f) empty
 -- Return elements of the first map not existing in the second map.
 difference :: Ord k => IntervalMap k a -> IntervalMap k b -> IntervalMap k a
 difference m1 m2 = differenceWithKey (\_ _ _ -> Nothing) m1 m2
+{-# INLINE difference #-}
 
 -- | Difference with a combining function. 
 -- When two equal keys are
@@ -791,6 +793,7 @@ difference m1 m2 = differenceWithKey (\_ _ _ -> Nothing) m1 m2
 -- it returns (@'Just' y@), the element is updated with a new value @y@. 
 differenceWith :: Ord k => (a -> b -> Maybe a) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k a
 differenceWith f m1 m2 = differenceWithKey (\_ v1 v2 -> f v1 v2) m1 m2
+{-# INLINE differenceWith #-}
 
 -- | Difference with a combining function. When two equal keys are
 -- encountered, the combining function is applied to the key and both values.
@@ -804,10 +807,12 @@ differenceWithKey f m1 m2 = fromDistinctAscList (ascListDifference f (toAscList 
 -- (@'intersection' m1 m2 == 'intersectionWith' 'const' m1 m2@).
 intersection :: Ord k => IntervalMap k a -> IntervalMap k b -> IntervalMap k a
 intersection m1 m2 = intersectionWithKey (\_ v _ -> v) m1 m2
+{-# INLINE intersection #-}
 
 -- | Intersection with a combining function.
 intersectionWith :: Ord k => (a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c
 intersectionWith f m1 m2 = intersectionWithKey (\_ v1 v2 -> f v1 v2) m1 m2
+{-# INLINE intersectionWith #-}
 
 -- | Intersection with a combining function.
 intersectionWithKey :: Ord k => (Interval k -> a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c
@@ -1037,16 +1042,19 @@ mapKeysMonotonic f m = mapKeys f m
 -- | Filter values satisfying a predicate.
 filter :: Ord k => (a -> Bool) -> IntervalMap k a -> IntervalMap k a
 filter p m = filterWithKey (\_ v -> p v) m
+{-# INLINE filter #-}
 
 -- | Filter keys\/values satisfying a predicate.
 filterWithKey :: Ord k => (Interval k -> a -> Bool) -> IntervalMap k a -> IntervalMap k a
 filterWithKey p m = mapMaybeWithKey (\k v -> if p k v then Just v else Nothing) m
+{-# INLINE filterWithKey #-}
 
 -- | Partition the map according to a predicate. The first
 -- map contains all elements that satisfy the predicate, the second all
 -- elements that fail the predicate. See also 'split'.
 partition :: Ord k => (a -> Bool) -> IntervalMap k a -> (IntervalMap k a, IntervalMap k a)
 partition p m = partitionWithKey (\_ v -> p v) m
+{-# INLINE partition #-}
 
 -- | Partition the map according to a predicate. The first
 -- map contains all elements that satisfy the predicate, the second all
@@ -1056,10 +1064,12 @@ partitionWithKey p m = mapEitherWithKey p' m
   where
     p' k v | p k v     = Left v
            | otherwise = Right v
+{-# INLINE partitionWithKey #-}
 
 -- | Map values and collect the 'Just' results.
 mapMaybe :: Ord k => (a -> Maybe b) -> IntervalMap k a -> IntervalMap k b
 mapMaybe f m = mapMaybeWithKey (\_ v -> f v) m
+{-# INLINE mapMaybe #-}
 
 -- | Map keys\/values and collect the 'Just' results.
 mapMaybeWithKey :: Ord k => (Interval k -> a -> Maybe b) -> IntervalMap k a -> IntervalMap k b
@@ -1074,6 +1084,7 @@ mapMaybeWithKey f m = fromDistinctAscList (mapf [] m)
 -- | Map values and separate the 'Left' and 'Right' results.
 mapEither :: Ord k => (a -> Either b c) -> IntervalMap k a -> (IntervalMap k b, IntervalMap k c)
 mapEither f m = mapEitherWithKey (\_ v -> f v) m
+{-# INLINE mapEither #-}
 
 -- | Map keys\/values and separate the 'Left' and 'Right' results.
 mapEitherWithKey :: Ord k => (Interval k -> a -> Either b c) -> IntervalMap k a -> (IntervalMap k b, IntervalMap k c)
@@ -1091,6 +1102,7 @@ mapEitherWithKey f m = (fromDistinctAscList l, fromDistinctAscList r)
 split :: Ord k => Interval k -> IntervalMap k a -> (IntervalMap k a, IntervalMap k a)
 split x m = (l, r)
   where (l, _, r) = splitLookup x m
+{-# INLINE split #-}
      
 -- | The expression (@'splitLookup' k map@) splits a map just
 -- like 'split' but also returns @'lookup' k map@.                               
