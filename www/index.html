@@ -19,7 +19,7 @@ containing a point or intersecting a given interval.
 <p>Here is the <a href="api/Data-IntervalMap.html">documentation</a>.</p>
 
 <p>Current release:
-<a href="IntervalMap-0.1.2.tar.gz">IntervalMap-0.1.2.tar.gz</a>
+<a href="IntervalMap-0.2.0.tar.gz">IntervalMap-0.2.0.tar.gz</a>
 </p>
 
 <p>If this does not fit your needs, you might want to look at these packages on Hackage:
@@ -29,10 +29,32 @@ containing a point or intersecting a given interval.
 <a href="http://hackage.haskell.org/package/Ranged-sets">Ranged-sets</a>
 </p>
 
+<hr/>
+<h3>Version history</h3>
+
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr valign="top">
+    <td><a href="IntervalMap-0.2.0.tar.gz">0.2.0</a></td>
+    <td>2011-12-14</td>
+    <td>Changed argument order and name:
+          <b>searchPoint</b> -&gt; <b>containing</b>,
+          <b>searchInterval</b> -&gt; <b>intersecting</b>.
+      <br/>
+        Added functions: <b>within</b>, <b>findLast</b>,
+          <b>updateMin</b>/<b>Max...</b>.
+    </td>
+  </tr>
+  <tr valign="top">
+    <td><a href="IntervalMap-0.1.2.tar.gz">0.1.2</a></td>
+    <td>2011-12-12</td>
+    <td>Initial release.</td>
+  </tr>
+</table>
+
 
 <hr/>
 <p>Copyright &copy; 2011 Christoph Breitkopf
-&nbsp; - &nbsp; last update: 2011-12-13
+&nbsp; - &nbsp; last update: 2011-12-14
 <br/>
 <a href="http://bokesan.blogspot.com">Blog</a>
 &middot;
