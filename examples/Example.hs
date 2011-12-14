@@ -31,13 +31,13 @@ appointmentsAt :: Time -> Appointments -> [(TimeSpan, Person, Details)]
 appointmentsAt t apps = [ (ts, p, d) | (ts, ps) <- hits, (p,d) <- ps ]
   where
     hits :: [(TimeSpan, [(Person, Details)])]
-    hits = IM.searchPoint t apps
+    hits = apps `containing` t
 
 appointmentsDuring :: Time -> Time -> Appointments -> [(TimeSpan, Person, Details)]
 appointmentsDuring from to apps = [ (ts, p, d) | (ts, ps) <- hits, (p,d) <- ps ]
   where
     hits :: [(TimeSpan, [(Person, Details)])]
-    hits = IM.searchInterval (mkTimeSpan from to) apps
+    hits =  apps `intersecting` mkTimeSpan from to
 
 main :: IO ()
 main = do putStrLn (show (appointmentsAt "09:00" sampleApps))
