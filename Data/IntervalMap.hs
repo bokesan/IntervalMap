@@ -643,12 +643,12 @@ updateMaxWithKey f m = let (k,v) = findMax m in
 
 setMinValue :: v -> IntervalMap k v -> IntervalMap k v
 setMinValue _  Nil = Nil
-setMinValue v' (Node c k m v Nil r) = Node c k m v' Nil r
+setMinValue v' (Node c k m _ Nil r) = Node c k m v' Nil r
 setMinValue v' (Node c k m v l   r) = Node c k m v (setMinValue v' l) r
 
 setMaxValue :: v -> IntervalMap k v -> IntervalMap k v
 setMaxValue _  Nil = Nil
-setMaxValue v' (Node c k m v l Nil) = Node c k m v' l Nil
+setMaxValue v' (Node c k m _ l Nil) = Node c k m v' l Nil
 setMaxValue v' (Node c k m v l r)   = Node c k m v l (setMaxValue v' r)
 
 
