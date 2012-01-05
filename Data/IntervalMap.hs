@@ -455,13 +455,28 @@ insertWith' f = insertWithKey' (\_ new old -> f new old)
 -- insert the pair @(key,f key new_value old_value)@.
 -- Note that the key passed to f is the same key passed to 'insertWithKey'.
 insertWithKey :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
-insertWithKey f k v m =  snd (insertLookupWithKey f k v m)
-{-# INLINE insertWithKey #-}
+insertWithKey f key value mp  =  key `seq` turnBlack (ins mp)
+  where
+    singletonR k v = Node R k k v Nil Nil
+    ins Nil = singletonR key value
+    ins (Node color k m v l r) =
+      case compare key k of
+        LT -> balanceL color k v (ins l) r
+        GT -> balanceR color k v l (ins r)
+        EQ -> Node color k m (f k value v) l r
 
 -- | Same as 'insertWithKey', but the combining function is applied strictly.
 insertWithKey' :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
-insertWithKey' f k v m =  snd (insertLookupWithKey' f k v m)
-{-# INLINE insertWithKey' #-}
+insertWithKey' f key value mp  =  key `seq` turnBlack (ins mp)
+  where
+    singletonR k v = Node R k k v Nil Nil
+    ins Nil = value `seq` singletonR key value
+    ins (Node color k m v l r) =
+      case compare key k of
+        LT -> balanceL color k v (ins l) r
+        GT -> balanceR color k v l (ins r)
+        EQ -> let v' = f k value v in v' `seq` Node color k m v' l r
+
 
 -- | /O(log n)/. Combine insert with old values retrieval.
 insertLookupWithKey :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> (Maybe v, IntervalMap k v)
