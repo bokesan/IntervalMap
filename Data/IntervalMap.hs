@@ -452,7 +452,7 @@ insertWith' f = insertWithKey' (\_ new old -> f new old)
 -- @'insertWithKey' f key value mp@ 
 -- will insert the pair (key, value) into @mp@ if key does
 -- not exist in the map. If the key does exist, the function will
--- insert the pair @(key,f key new_value old_value)@.
+-- insert the pair @(key, f key new_value old_value)@.
 -- Note that the key passed to f is the same key passed to 'insertWithKey'.
 insertWithKey :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insertWithKey f key value mp  =  key `seq` turnBlack (ins mp)

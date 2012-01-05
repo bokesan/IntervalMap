@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.2.1
+Version:             0.2.2
 Stability:           experimental
 Synopsis:            Maps from Intervals to values, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
@@ -16,11 +16,12 @@ Tested-With:         GHC==7.0.4, GHC==6.12.1
 Description:
                      A map from intervals to values, with efficient search
                      for all keys containing a point or overlapping an interval.
+                     See the example code on the home page for a quick introduction.
 
 extra-source-files:
   README
   test/*.hs
-  examples/*.hs
+  examples/*.lhs
 
 Library
   Exposed-modules:     Data.IntervalMap, Data.IntervalMap.Interval
