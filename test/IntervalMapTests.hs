@@ -358,6 +358,15 @@ assoc k ((x,v):xs) | x == k    = Just v
 prop_mapAccum (IMI m) =  M.valid m' && acc == sum (M.elems m) && sum (M.elems m') == 2 * acc
   where (acc, m') = M.mapAccum (\a v -> (a+v, 2*v)) 0 m
 
+-- submap
+
+prop_submap (IMI m1) (IMI m2)
+  | m1 `M.isSubmapOf` m2 = M.size m1 <= M.size m2
+                           && all (==True) [k `M.member` m2 && m1 M.! k == m2 M.! k | k <- M.keys m1]
+  | otherwise            = M.size m1 > M.size m2
+                           || any (==True) [k `M.notMember` m2 || m1 M.! k /= m2 M.! k | k <- M.keys m1]
+
+
 -- filter
 
 prop_filter (IMI m) =  M.valid m' && all odd (M.elems m') && M.size m' == odds
@@ -434,6 +443,7 @@ main = do
 	  check prop_partition "partition"
 	  check prop_splitLookup "splitLookup"
 	  check prop_mapKeysWith "mapKeysWith"
+          check prop_submap "submap"
 	  putStrLn ("deep100L: " ++ show (M.showStats deep100L))
 	  putStrLn ("deep100R: " ++ show (M.showStats deep100R))
 	  exitSuccess

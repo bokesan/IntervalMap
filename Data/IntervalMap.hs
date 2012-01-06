@@ -157,12 +157,12 @@ module Data.IntervalMap (
 
             , split         
             , splitLookup   
-            {-
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy
             , isProperSubmapOf, isProperSubmapOfBy
 
+            {-
             -- * Indexed 
             , lookupIndex
             , findIndex
@@ -1173,6 +1173,42 @@ splitLookup x m = (fromDistinctAscList less, lookup x m, fromDistinctAscList gre
   where
     less    = [e | e@(k,_) <- toAscList m, k < x]
     greater = [e | e@(k,_) <- toAscList m, k > x]
+
+-- submaps
+
+-- | /O(n+m)/. This function is defined as (@'isSubmapOf' = 'isSubmapOfBy' (==)@).
+isSubmapOf :: (Ord k, Eq a) => IntervalMap k a -> IntervalMap k a -> Bool
+isSubmapOf m1 m2 = isSubmapOfBy (==) m1 m2
+
+{- | /O(n+m)/.
+ The expression (@'isSubmapOfBy' f t1 t2@) returns 'True' if
+ all keys in @t1@ are in tree @t2@, and @f@ returns 'True' when
+ applied to their respective values.
+-}
+isSubmapOfBy :: Ord k => (a -> b -> Bool) -> IntervalMap k a -> IntervalMap k b -> Bool
+isSubmapOfBy f m1 m2 = go (toAscList m1) (toAscList m2)
+  where
+    go []    _  =  True
+    go (_:_) [] =  False
+    go s1@((k1,v1):r1) ((k2,v2):r2) =
+       case compare k1 k2 of
+         GT -> go s1 r2
+         EQ -> f v1 v2 && go r1 r2
+         LT -> False
+
+-- | /O(n+m)/. Is this a proper submap? (ie. a submap but not equal). 
+-- Defined as (@'isProperSubmapOf' = 'isProperSubmapOfBy' (==)@).
+isProperSubmapOf :: (Ord k, Eq a) => IntervalMap k a -> IntervalMap k a -> Bool
+isProperSubmapOf m1 m2 = isProperSubmapOfBy (==) m1 m2
+
+{- | /O(n+m)/. Is this a proper submap? (ie. a submap but not equal).
+ The expression (@'isProperSubmapOfBy' f m1 m2@) returns 'True' when
+ @m1@ and @m2@ are not equal,
+ all keys in @m1@ are in @m2@, and when @f@ returns 'True' when
+ applied to their respective values.
+-}
+isProperSubmapOfBy :: Ord k => (a -> b -> Bool) -> IntervalMap k a -> IntervalMap k b -> Bool
+isProperSubmapOfBy f t1 t2 = size t1 < size t2 && isSubmapOfBy f t1 t2
 
 
 -- debugging
