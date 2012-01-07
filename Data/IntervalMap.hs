@@ -183,12 +183,10 @@ module Data.IntervalMap (
             , updateMax
             , updateMinWithKey
             , updateMaxWithKey
-            {-
             , minView
             , maxView
             , minViewWithKey
             , maxViewWithKey
-            -}
 
             -- * Debugging
             , valid
@@ -655,6 +653,37 @@ updateMaxWithKey f m = let (k,v) = findMax m in
                        case f k v of
                          Just v' -> setMaxValue v' m
                          Nothing -> deleteMax m
+
+-- | /O(log n)/. Retrieves the minimal (key,value) pair of the map, and
+-- the map stripped of that element, or 'Nothing' if passed an empty map.
+--
+-- > minViewWithKey (fromList [(5,"a"), (3,"b")]) == Just ((3,"b"), singleton 5 "a")
+-- > minViewWithKey empty == Nothing
+
+minViewWithKey :: Ord k => IntervalMap k a -> Maybe ((Interval k, a), IntervalMap k a)
+minViewWithKey Nil = Nothing
+minViewWithKey x   = Just (deleteFindMin x)
+
+-- | /O(log n)/. Retrieves the maximal (key,value) pair of the map, and
+-- the map stripped of that element, or 'Nothing' if passed an empty map.
+maxViewWithKey :: Ord k => IntervalMap k a -> Maybe ((Interval k, a), IntervalMap k a)
+maxViewWithKey Nil = Nothing
+maxViewWithKey x   = Just (deleteFindMax x)
+
+-- | /O(log n)/. Retrieves the value associated with minimal key of the
+-- map, and the map stripped of that element, or 'Nothing' if passed an
+-- empty map.
+minView :: Ord k => IntervalMap k a -> Maybe (a, IntervalMap k a)
+minView Nil = Nothing
+minView x   = case deleteFindMin x of ((_,a), x') -> Just (a, x')
+
+-- | /O(log n)/. Retrieves the value associated with maximal key of the
+-- map, and the map stripped of that element, or 'Nothing' if passed an
+-- empty map.
+maxView :: Ord k => IntervalMap k a -> Maybe (a, IntervalMap k a)
+maxView Nil = Nothing
+maxView x   = case deleteFindMax x of ((_,a), x') -> Just (a, x')
+
 
 setMinValue :: v -> IntervalMap k v -> IntervalMap k v
 setMinValue _  Nil = Nil
