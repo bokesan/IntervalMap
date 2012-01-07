@@ -15,8 +15,8 @@ code, one would of course use newtype or data for this.
 > type Person = String
 > type Details = String
 
-For readability, I use strings to represent timestamps. Also, to keep it shorter,
-I will omit the date and only use the time of the day in this example.
+Again for readability, I use strings to represent timestamps. Also, to keep it shorter,
+I will omit the date and only use the time of the day in this example, e.g.: "09:00", "12:47".
 
 > type Time = String
 > type TimeSpan = Interval Time
@@ -28,7 +28,7 @@ but open at the endpoint:
 > mkTimeSpan :: Time -> Time -> TimeSpan
 > mkTimeSpan from to = IntervalCO from to
 
-An appointment consists or the timespan, the person, and the appointment details:
+An appointment consists of the timespan, the person, and the appointment details:
 
 > type Appointment = (TimeSpan, Person, Details)
 
