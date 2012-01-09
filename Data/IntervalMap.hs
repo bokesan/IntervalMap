@@ -1123,12 +1123,10 @@ mapKeysWith c f m = fromListWith c [ (f k, v) | (k, v) <- toAscList m ]
 -- is strictly monotonic.
 -- That is, for any values @x@ and @y@, if @x@ < @y@ then @f x@ < @f y@.
 -- /The precondition is not checked./
---
--- This function is currently identical to 'mapKeys', but will eventually be rewritten to have better
--- better performance (/O(n)/).
 mapKeysMonotonic :: Ord k2 => (Interval k1 -> Interval k2) -> IntervalMap k1 a -> IntervalMap k2 a
--- TODO: optimize
-mapKeysMonotonic f m = mapKeys f m
+mapKeysMonotonic _ Nil = Nil
+mapKeysMonotonic f (Node c k _ x l r) =
+    mNode c (f k) x (mapKeysMonotonic f l) (mapKeysMonotonic f r)
 
 -- | /O(n)/. Filter values satisfying a predicate.
 filter :: Ord k => (a -> Bool) -> IntervalMap k a -> IntervalMap k a
