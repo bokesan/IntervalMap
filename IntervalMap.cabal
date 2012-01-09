@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.2.2
+Version:             0.2.3
 Stability:           experimental
 Synopsis:            Maps from Intervals to values, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
