@@ -1001,7 +1001,7 @@ fromDistinctAscList lyst = case h (length lyst) lyst of
            | isPerfect n = buildB n xs
            | otherwise   = buildR n (log2 n) xs
 
-    buildB n xs | n <= 0     = error "fromDictinctAscList: buildB 0"
+    buildB n xs | xs `seq` n <= 0 = error "fromDictinctAscList: buildB 0"
                 | n == 1     = case xs of ((k,v):xs') -> (Node B k k v Nil Nil, xs')
                 | otherwise  =
                      case n `quot` 2 of { n' ->
@@ -1009,7 +1009,7 @@ fromDistinctAscList lyst = case h (length lyst) lyst of
                      case buildB n' xs' of { (r, xs'') ->
                      (mNode B k v l r, xs'') }}}
 
-    buildR n d xs | d `seq` n == 0    = (Nil, xs)
+    buildR n d xs | d `seq` xs `seq` n == 0 = (Nil, xs)
                   | n == 1    = case xs of ((k,v):xs') -> (Node (if d==0 then R else B) k k v Nil Nil, xs')
                   | otherwise =
                       case n `quot` 2 of { n' ->
@@ -1025,8 +1025,8 @@ isPerfect n = (n .&. (n + 1)) == 0
 log2 :: Int -> Int
 log2 m = h (-1) m
   where
-    h r n | n <= 0     = r
-          | otherwise  = h (r + 1) (n `shiftR` 1)
+    h r n | r `seq` n <= 0 = r
+          | otherwise      = h (r + 1) (n `shiftR` 1)
 
 
 -- | /O(n)/. List of all values in the map, in ascending order of their keys.
