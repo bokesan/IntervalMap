@@ -1242,7 +1242,7 @@ isProperSubmapOfBy f t1 t2 = size t1 < size t2 && isSubmapOfBy f t1 t2
 
 -- | Check red-black-tree and interval search augmentation invariants.
 valid :: Ord k => IntervalMap k v -> Bool
-valid mp = ({-# SCC "scc_test" #-} test mp) && height mp <= maxHeight (size mp) && validColor mp
+valid mp = test mp && height mp <= maxHeight (size mp) && validColor mp
   where
     test Nil = True
     test n@(Node _ _ _ _ l r) = validOrder n && validMax n && test l && test r
@@ -1256,7 +1256,7 @@ valid mp = ({-# SCC "scc_test" #-} test mp) && height mp <= maxHeight (size mp) 
     validOrder Nil = True
 
     -- validColor parentColor blackCount tree
-    validColor n = {-# SCC "scc_blackDepth" #-} blackDepth n >= 0
+    validColor n = blackDepth n >= 0
 
     -- return -1 if subtrees have diffrent black depths or two consecutive red nodes are encountered
     blackDepth :: IntervalMap k v -> Int
