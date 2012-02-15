@@ -94,7 +94,6 @@ compareL (IntervalOC     a _) (IntervalCO     b _)  = if a < b then LT else GT
 compareL (IntervalOC     a _) (ClosedInterval b _)  = if a < b then LT else GT
 compareL (IntervalOC     a _) (OpenInterval   b _)  = compare a b
 compareL (IntervalOC     a _) (IntervalOC     b _)  = compare a b
-{-# INLINE compareL #-}
 
 -- compare only the upper bound
 compareU :: Ord a => Interval a -> Interval a -> Ordering
@@ -114,7 +113,6 @@ compareU (IntervalOC     _ a) (IntervalCO     _ b)  = if a < b then LT else GT
 compareU (IntervalOC     _ a) (ClosedInterval _ b)  = compare a b
 compareU (IntervalOC     _ a) (OpenInterval   _ b)  = if a < b then LT else GT
 compareU (IntervalOC     _ a) (IntervalOC     _ b)  = compare a b
-{-# INLINE compareU #-}
 
 instance Ord a => Ord (Interval a) where
   compare a b = case compareL a b of
@@ -237,7 +235,6 @@ IntervalOC _ l     `before` IntervalOC r _      =  l <= r
 -- Same as 'flip before'.
 after :: Ord a => Interval a -> Interval a -> Bool
 r `after` l = l `before` r
-{-# INLINE after #-}
 
 
 -- | Does the interval contain a given point?

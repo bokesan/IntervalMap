@@ -438,7 +438,6 @@ t `within` iv = go [] iv t
 -- changed to the new value.
 insert :: (Ord k) => Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insert =  insertWithKey' (\_ v _ -> v)
-{-# INLINE insert #-}
 
 -- | /O(log n)/. Insert with a function, combining new value and old value.
 -- @'insertWith' f key value mp@ 
@@ -447,13 +446,11 @@ insert =  insertWithKey' (\_ v _ -> v)
 -- insert the pair @(key, f new_value old_value)@.
 insertWith :: (Ord k) => (v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insertWith f = insertWithKey (\_ new old -> f new old)
-{-# INLINE insertWith #-}
 
 -- | Same as 'insertWith', but the combining function is applied strictly.
 -- This is often the most desirable behavior.
 insertWith' :: (Ord k) => (v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insertWith' f = insertWithKey' (\_ new old -> f new old)
-{-# INLINE insertWith' #-}
 
 -- | /O(log n)/. Insert with a function, combining key, new value and old value.
 -- @'insertWithKey' f key value mp@ 
@@ -800,7 +797,6 @@ blackify s                    = Shrunk s
 -- a member of the map, the original map is returned.
 adjust :: Ord k => (a -> a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 adjust f k m = adjustWithKey (\_ v -> f v) k m
-{-# INLINE adjust #-}
 
 -- | /O(log n)/. Adjust a value at a specific key. When the key is not
 -- a member of the map, the original map is returned.
@@ -817,7 +813,6 @@ adjustWithKey f x (Node c k m v l r) =
 -- deleted. If it is (@'Just' y@), the key @k@ is bound to the new value @y@.
 update :: Ord k => (a -> Maybe a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 update f k m = updateWithKey (\_ v -> f v) k m
-{-# INLINE update #-}
 
 -- | /O(log n)/. The expression (@'updateWithKey' f k map@) updates the
 -- value @x@ at @k@ (if it is in the map). If (@f k x@) is 'Nothing',
@@ -825,7 +820,6 @@ update f k m = updateWithKey (\_ v -> f v) k m
 -- to the new value @y@.
 updateWithKey :: Ord k => (Interval k -> a -> Maybe a) -> Interval k -> IntervalMap k a -> IntervalMap k a
 updateWithKey f k m = snd (updateLookupWithKey f k m)
-{-# INLINE updateWithKey #-}
 
 -- | /O(log n)/. Lookup and update. See also 'updateWithKey'.
 -- The function returns changed value, if it is updated.
@@ -855,12 +849,10 @@ alter f x m = case lookup x m of
 -- i.e. (@'union' == 'unionWith' 'const'@).
 union :: Ord k => IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 union m1 m2 = unionWith const m1 m2
-{-# INLINE union #-}
 
 -- | /O(n+m)/. Union with a combining function.
 unionWith :: Ord k => (a -> a -> a) -> IntervalMap k a -> IntervalMap k a -> IntervalMap k a
 unionWith f m1 m2 = unionWithKey (\_ v1 v2 -> f v1 v2) m1 m2
-{-# INLINE unionWith #-}
 
 -- | /O(n+m)/. Union with a combining function.
 unionWithKey :: Ord k => (Interval k -> a -> a -> a) -> IntervalMap k a -> IntervalMap k a -> IntervalMap k a
@@ -880,7 +872,6 @@ unionsWith f = L.foldl (unionWith f) empty
 -- Return elements of the first map not existing in the second map.
 difference :: Ord k => IntervalMap k a -> IntervalMap k b -> IntervalMap k a
 difference m1 m2 = differenceWithKey (\_ _ _ -> Nothing) m1 m2
-{-# INLINE difference #-}
 
 -- | /O(n+m)/. Difference with a combining function. 
 -- When two equal keys are
@@ -889,7 +880,6 @@ difference m1 m2 = differenceWithKey (\_ _ _ -> Nothing) m1 m2
 -- it returns (@'Just' y@), the element is updated with a new value @y@. 
 differenceWith :: Ord k => (a -> b -> Maybe a) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k a
 differenceWith f m1 m2 = differenceWithKey (\_ v1 v2 -> f v1 v2) m1 m2
-{-# INLINE differenceWith #-}
 
 -- | /O(n+m)/. Difference with a combining function. When two equal keys are
 -- encountered, the combining function is applied to the key and both values.
@@ -903,12 +893,10 @@ differenceWithKey f m1 m2 = fromDistinctAscList (ascListDifference f (toAscList 
 -- (@'intersection' m1 m2 == 'intersectionWith' 'const' m1 m2@).
 intersection :: Ord k => IntervalMap k a -> IntervalMap k b -> IntervalMap k a
 intersection m1 m2 = intersectionWithKey (\_ v _ -> v) m1 m2
-{-# INLINE intersection #-}
 
 -- | /O(n+m)/. Intersection with a combining function.
 intersectionWith :: Ord k => (a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c
 intersectionWith f m1 m2 = intersectionWithKey (\_ v1 v2 -> f v1 v2) m1 m2
-{-# INLINE intersectionWith #-}
 
 -- | /O(n+m)/. Intersection with a combining function.
 intersectionWithKey :: Ord k => (Interval k -> a -> b -> c) -> IntervalMap k a -> IntervalMap k b -> IntervalMap k c
@@ -1029,7 +1017,6 @@ fromDistinctAscList lyst = case h (length lyst) lyst of
 -- is n a perfect binary tree size (2^m-1)?
 isPerfect :: Int -> Bool
 isPerfect n = (n .&. (n + 1)) == 0
-{-# INLINE isPerfect #-}
 
 log2 :: Int -> Int
 log2 m = h (-1) m
@@ -1053,14 +1040,12 @@ keysSet m =  Set.fromDistinctAscList (keys m)
 -- | Same as 'toAscList'.
 assocs :: IntervalMap k v -> [(Interval k, v)]
 assocs m = toAscList m
-{-# INLINE assocs #-}
 
 -- --- Mapping ---
 
 -- | /O(n)/. Map a function over all values in the map.
 map :: (a -> b) -> IntervalMap k a -> IntervalMap k b
 map f = mapWithKey (\_ x -> f x)
-{-# INLINE map #-}
 
 -- | /O(n)/. Map a function over all values in the map.
 mapWithKey :: (Interval k -> a -> b) -> IntervalMap k a -> IntervalMap k b
@@ -1076,7 +1061,6 @@ mapWithKey f = go
 -- > mapAccum f "Everything: " (fromList [(5,"a"), (3,"b")]) == ("Everything: ba", fromList [(3, "bX"), (5, "aX")])
 mapAccum :: (a -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
 mapAccum f a m = mapAccumWithKey (\a' _ x' -> f a' x') a m
-{-# INLINE mapAccum #-}
 
 -- | /O(n)/. The function 'mapAccumWithKey' threads an accumulating
 -- argument through the map in ascending order of keys.
@@ -1085,7 +1069,6 @@ mapAccum f a m = mapAccumWithKey (\a' _ x' -> f a' x') a m
 -- > mapAccumWithKey f "Everything:" (fromList [(5,"a"), (3,"b")]) == ("Everything: 3-b 5-a", fromList [(3, "bX"), (5, "aX")])
 mapAccumWithKey :: (a -> Interval k -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
 mapAccumWithKey f a t = mapAccumL f a t
-{-# INLINE mapAccumWithKey #-}
 
 -- | /O(n)/. The function 'mapAccumL' threads an accumulating
 -- argument throught the map in ascending order of keys.
@@ -1140,19 +1123,16 @@ mapKeysMonotonic f (Node c k _ x l r) =
 -- | /O(n)/. Filter values satisfying a predicate.
 filter :: Ord k => (a -> Bool) -> IntervalMap k a -> IntervalMap k a
 filter p m = filterWithKey (\_ v -> p v) m
-{-# INLINE filter #-}
 
 -- | /O(n)/. Filter keys\/values satisfying a predicate.
 filterWithKey :: Ord k => (Interval k -> a -> Bool) -> IntervalMap k a -> IntervalMap k a
 filterWithKey p m = mapMaybeWithKey (\k v -> if p k v then Just v else Nothing) m
-{-# INLINE filterWithKey #-}
 
 -- | /O(n)/. Partition the map according to a predicate. The first
 -- map contains all elements that satisfy the predicate, the second all
 -- elements that fail the predicate. See also 'split'.
 partition :: Ord k => (a -> Bool) -> IntervalMap k a -> (IntervalMap k a, IntervalMap k a)
 partition p m = partitionWithKey (\_ v -> p v) m
-{-# INLINE partition #-}
 
 -- | /O(n)/. Partition the map according to a predicate. The first
 -- map contains all elements that satisfy the predicate, the second all
@@ -1162,12 +1142,10 @@ partitionWithKey p m = mapEitherWithKey p' m
   where
     p' k v | p k v     = Left v
            | otherwise = Right v
-{-# INLINE partitionWithKey #-}
 
 -- | /O(n)/. Map values and collect the 'Just' results.
 mapMaybe :: Ord k => (a -> Maybe b) -> IntervalMap k a -> IntervalMap k b
 mapMaybe f m = mapMaybeWithKey (\_ v -> f v) m
-{-# INLINE mapMaybe #-}
 
 -- | /O(n)/. Map keys\/values and collect the 'Just' results.
 mapMaybeWithKey :: Ord k => (Interval k -> a -> Maybe b) -> IntervalMap k a -> IntervalMap k b
@@ -1182,7 +1160,6 @@ mapMaybeWithKey f m = fromDistinctAscList (mapf [] m)
 -- | /O(n)/. Map values and separate the 'Left' and 'Right' results.
 mapEither :: Ord k => (a -> Either b c) -> IntervalMap k a -> (IntervalMap k b, IntervalMap k c)
 mapEither f m = mapEitherWithKey (\_ v -> f v) m
-{-# INLINE mapEither #-}
 
 -- | /O(n)/. Map keys\/values and separate the 'Left' and 'Right' results.
 mapEitherWithKey :: Ord k => (Interval k -> a -> Either b c) -> IntervalMap k a -> (IntervalMap k b, IntervalMap k c)
@@ -1200,7 +1177,6 @@ mapEitherWithKey f m = (fromDistinctAscList l, fromDistinctAscList r)
 split :: Ord k => Interval k -> IntervalMap k a -> (IntervalMap k a, IntervalMap k a)
 split x m = (l, r)
   where (l, _, r) = splitLookup x m
-{-# INLINE split #-}
      
 -- | /O(n)/. The expression (@'splitLookup' k map@) splits a map just
 -- like 'split' but also returns @'lookup' k map@.                               
