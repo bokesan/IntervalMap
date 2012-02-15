@@ -7,21 +7,30 @@
 -- Portability :  portable
 --
 -- An implementation of maps from intervals to values. The key intervals may
--- overlap, and the implementation supports an efficient stabbing query.
+-- overlap, and the implementation contains efficient search functions
+-- for all keys containing a point or overlapping an interval.
+-- Closed, open, and half-open intervals can be contained in the same map.
+--
+-- An IntervalMap cannot contain duplicate keys - if you need to map a key
+-- to muiltiple values, use a collection as the value type, for
+-- example: @IntervalMap /k/ [/v/]@.
+--
+-- It is an error to insert an empty interval into a map. This precondition is not
+-- checked by the various construction functions.
 --
 -- Since many function names (but not the type name) clash with
--- "Prelude" names, this module is usually imported @qualified@, e.g.
+-- /Prelude/ names, this module is usually imported @qualified@, e.g.
 --
 -- >  import Data.IntervalMap (IvMap)
 -- >  import qualified Data.IntervalMap as IvMap
 --
--- It offers most of the functions in Data.Map, but 'Interval' /k/ instead of
+-- It offers most of the same functions as 'Data.Map', but uses 'Interval' /k/ instead of
 -- just /k/ as the key type. Some of the functions need stricter type constraints to
 -- maintain the additional information for efficient interval searching,
 -- for example 'fromDistinctAscList' needs an 'Ord' /k/ constraint.
---
--- Index-based access and some set functions have not been implemented, and many non-core
--- functions, for example the set operations, have not been tuned for efficiency yet.
+-- Also, some functions differ in asymptotic performance (for example 'size') or have not
+-- been tuned for efficiency as much as their equivalents in 'Data.Map' (in
+-- particular the various set functions).
 --
 -- In addition, there are functions specific to maps of intervals, for example to search
 -- for all keys containing a given point or contained in a given interval.
@@ -29,12 +38,7 @@
 -- To stay compatible with standard Haskell, this implementation uses a fixed data
 -- type for intervals, and not a multi-parameter type class. Thus, it's currently
 -- not possible to define e.g. a 2-tuple as an instance of interval and use that
--- map key. Instead you must convert your keys to 'Data.IntervalMap.Interval'.
---
--- Closed, open, and half-open intervals can be contained in the same map.
---
--- It is an error to insert an empty interval into a map. This precondition is not
--- checked by the various insertion functions.
+-- map key. Instead, you must convert your keys to 'Interval'.
 --
 -- The implementation is a red-black tree augmented with the maximum upper bound
 -- of all keys.
@@ -325,6 +329,9 @@ null Nil = True
 null _   = False
 
 -- | /O(n)/. Number of keys in the map.
+--
+-- Caution: unlike 'Data.Map.size', which takes constant time, this is linear in the
+-- number of keys!
 size :: IntervalMap k v -> Int
 size t = h 0 t
   where
@@ -338,10 +345,12 @@ height Nil = 0
 height (Node _ _ _ _ l r) = 1 + max (height l) (height r)
 
 -- | The maximum height of a red-black tree with the given number of nodes.
+-- For testing/debugging only.
 maxHeight :: Int -> Int
 maxHeight nodes = 2 * log2 (nodes + 1)
 
--- | Tree statistics (size, height, maxHeight size)
+-- | Tree statistics (size, height, maxHeight size).
+-- For testing/debugging only.
 showStats :: IntervalMap k a -> (Int, Int, Int)
 showStats m = (n, height m, maxHeight n)
   where n = size m
@@ -1241,6 +1250,7 @@ isProperSubmapOfBy f t1 t2 = size t1 < size t2 && isSubmapOfBy f t1 t2
 -- debugging
 
 -- | Check red-black-tree and interval search augmentation invariants.
+-- For testing/debugging only.
 valid :: Ord k => IntervalMap k v -> Bool
 valid mp = test mp && height mp <= maxHeight (size mp) && validColor mp
   where
