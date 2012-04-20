@@ -41,3 +41,13 @@ Test-Suite TestIntervalMap
   main-is:            IntervalMapTests.hs
   hs-source-dirs:     test
   build-depends:      IntervalMap, base, QuickCheck, Cabal >= 1.9.2
+
+benchmark bench-all
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     . bench
+  main-is:            BenchAll.hs
+  Build-depends:      base >= 4 && < 5,
+                      containers, random, deepseq,
+                      criterion >= 0.6 && < 0.7
+  ghc-options: -Wall
+  Extensions: CPP
