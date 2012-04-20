@@ -5,6 +5,7 @@ import Control.DeepSeq
 import Prelude hiding (lookup, max, foldr)
 import System.Random
 import Data.Foldable (foldr)
+import Data.List (sort)
 
 import Data.Map as D
 import Data.IntervalMap as M hiding (foldr)
@@ -40,52 +41,67 @@ move n = fmap (n+)
 benchConfig :: Config
 benchConfig =  defaultConfig { cfgReport = ljust "bench-all.html" }
 
+cDATA_SIZE :: Int
+cDATA_SIZE =  100000
+
 
 main :: IO ()
 main =
   do
-      let ivs  = genRandomIntervals 100000 20 100000
-      let ivs2 = genRandomIntervals 100000 20  20000
-      lookupKeys <- ensure $ [ClosedInterval lo hi | (lo,hi) <- take 10000  ivs]
-      m1e5 <- ensure $ D.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs]
-      i1e5 <- ensure $ M.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs]
-      m2e4 <- ensure $ D.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs2]
-      i2e4 <- ensure $ M.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs2]
-      r1e4 <- ensure (genRandomInts 1 100000 10000)
+      let ivs  = genRandomIntervals cDATA_SIZE 20 cDATA_SIZE
+      let ivs2 = genRandomIntervals cDATA_SIZE 20 (cDATA_SIZE `quot` 2)
+      ivsP   <- ensure $ [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs]
+      oIvsP  <- ensure $ sort ivsP
+      lookupKeys <- ensure $ [i | (i,_) <- ivsP]
+      dMap   <- ensure $ D.fromList ivsP
+      dIvMap <- ensure $ M.fromList ivsP
+      dMapSmall <- ensure $ D.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs2]
+      dIvMapSmall <- ensure $ M.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs2]
+      rndInts <- ensure (genRandomInts 1 cDATA_SIZE cDATA_SIZE)
       defaultMainWith benchConfig (return ()) [
+         bgroup "fromList (insert)" [
+           bench "Data.Map"        $ nf D.fromList ivsP,
+           bench "IntervalMap"     $ nf M.fromList ivsP
+         ],
+         bgroup "fromAscList" [
+           bench "Data.Map"        $ nf D.fromAscList oIvsP,
+           bench "IntervalMap"     $ nf M.fromAscList oIvsP
+         ],
          bgroup "search" [
-           bench "lookup Data.Map" $ nf (\m -> [D.lookup i m | i <- lookupKeys]) m1e5,
-           bench "lookup"          $ nf (\m -> [M.lookup i m | i <- lookupKeys]) i1e5,
-           bench "containing"      $ nf (\m -> sum [v | p <- r1e4, (_,v) <- m `M.containing` p]) i1e5,
-           bench "intersecting"    $ nf (\m -> sum [v | p <- r1e4, (_,v) <- m `M.intersecting` (ClosedInterval p (p+15))]) i1e5,
-           bench "within" $ nf (\m -> sum [v | p <- r1e4, (_,v) <- m `M.within` (ClosedInterval p (p+15))]) i1e5
+           bench "lookup Data.Map" $ nf (\m -> [D.lookup i m | i <- lookupKeys]) dMap,
+           bench "lookup"          $ nf (\m -> [M.lookup i m | i <- lookupKeys]) dIvMap,
+           bench "containing"      $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.containing` p]) dIvMap,
+           bench "intersecting"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.intersecting` (ClosedInterval p (p+15))]) dIvMap,
+           bench "within" $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.within` (ClosedInterval p (p+15))]) dIvMap
          ],
          bgroup "mapKeys" [
-           bench "2e4 Data.Map"              $ nf (D.mapKeys (move 1)) m2e4,
-           bench "2e4 IntervalMap"           $ nf (M.mapKeys (move 1)) i2e4,
-           bench "1e5 Data.Map monotonic"    $ nf (D.mapKeysMonotonic (move 1)) m1e5,
-           bench "1e5 IntervalMap monotonic" $ nf (M.mapKeysMonotonic (move 1)) i1e5
+           bench "Data.Map"              $ nf (D.mapKeys (move 1)) dMap,
+           bench "IntervalMap"           $ nf (M.mapKeys (move 1)) dIvMap,
+           bench "Data.Map monotonic"    $ nf (D.mapKeysMonotonic (move 1)) dMap,
+           bench "IntervalMap monotonic" $ nf (M.mapKeysMonotonic (move 1)) dIvMap
          ],
          bgroup "map" [
-           bench "Data.Map"    $ nf (D.map (1+)) m1e5,
-           bench "IntervalMap" $ nf (M.map (1+)) i1e5
+           bench "Data.Map"    $ nf (D.map (1+)) dMap,
+           bench "IntervalMap" $ nf (M.map (1+)) dIvMap
          ],
          bgroup "union" [
-           bench "Data.Map"         $ nf (\m -> D.union m m2e4) m1e5,
-           bench "Data.Map flip"    $ nf (\m -> D.union m2e4 m) m1e5,
-           bench "IntervalMap"      $ nf (\m -> M.union m i2e4) i1e5,
-           bench "IntervalMap flip" $ nf (\m -> M.union i2e4 m) i1e5
-         ],
-         bgroup "difference" [
-           bench "Data.Map"    $ nf (\m -> D.difference m m2e4) m1e5,
-           bench "IntervalMap" $ nf (\m -> M.difference m i2e4) i1e5
+           bench "Data.Map Large/Small"    $ nf (\m -> D.union m dMapSmall) dMap,
+           bench "Data.Map Small/Large"    $ nf (\m -> D.union dMapSmall m) dMap,
+           bench "IntervalMap Large/Small" $ nf (\m -> M.union m dIvMapSmall) dIvMap,
+           bench "IntervalMap Small/Large" $ nf (\m -> M.union dIvMapSmall m) dIvMap
          ],
          bgroup "intersection" [
-           bench "Data.Map"    $ nf (\m -> D.intersection m m2e4) m1e5,
-           bench "IntervalMap" $ nf (\m -> M.intersection m i2e4) i1e5
+           bench "Data.Map Large/Small"    $ nf (\m -> D.intersection m dMapSmall) dMap,
+           bench "Data.Map Small/Large"    $ nf (\m -> D.intersection dMapSmall m) dMap,
+           bench "IntervalMap Large/Small" $ nf (\m -> M.intersection m dIvMapSmall) dIvMap,
+           bench "IntervalMap Small/Large" $ nf (\m -> M.intersection dIvMapSmall m) dIvMap
+         ],
+         bgroup "difference" [
+           bench "Data.Map"    $ nf (\m -> D.difference m dMapSmall) dMap,
+           bench "IntervalMap" $ nf (\m -> M.difference m dIvMapSmall) dIvMap
          ],
          bgroup "delete" [
-           bench "Data.Map"    $ nf (\m -> foldr (\k mp -> D.delete k mp) m lookupKeys) m1e5,
-           bench "IntervalMap" $ nf (\m -> foldr (\k mp -> M.delete k mp) m lookupKeys) i1e5
+           bench "Data.Map"    $ nf (\m -> foldr (\k mp -> D.delete k mp) m lookupKeys) dMap,
+           bench "IntervalMap" $ nf (\m -> foldr (\k mp -> M.delete k mp) m lookupKeys) dIvMap
          ]
        ]

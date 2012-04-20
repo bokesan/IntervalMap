@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.2.3.1
+Version:             0.2.3.2
 Stability:           experimental
 Synopsis:            Maps from Intervals to values, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
@@ -33,14 +33,16 @@ Library
 Test-Suite TestInterval
   type:               exitcode-stdio-1.0
   main-is:            IntervalTests.hs
-  hs-source-dirs:     test
-  build-depends:      IntervalMap, base, QuickCheck, Cabal >= 1.9.2
+  hs-source-dirs:     . test
+  build-depends:      base >= 4 && < 5, containers, deepseq,
+                      QuickCheck, Cabal >= 1.9.2
 
 Test-Suite TestIntervalMap
   type:               exitcode-stdio-1.0
   main-is:            IntervalMapTests.hs
-  hs-source-dirs:     test
-  build-depends:      IntervalMap, base, QuickCheck, Cabal >= 1.9.2
+  hs-source-dirs:     . test
+  build-depends:      base >= 4 && < 5, containers, deepseq,
+                      QuickCheck, Cabal >= 1.9.2
 
 benchmark bench-all
   type:               exitcode-stdio-1.0
@@ -50,4 +52,3 @@ benchmark bench-all
                       containers, random, deepseq,
                       criterion >= 0.6 && < 0.7
   ghc-options: -Wall
-  Extensions: CPP
