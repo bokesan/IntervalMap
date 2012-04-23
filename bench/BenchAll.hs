@@ -101,7 +101,25 @@ main =
            bench "IntervalMap" $ nf (\m -> M.difference m dIvMapSmall) dIvMap
          ],
          bgroup "delete" [
-           bench "Data.Map"    $ nf (\m -> foldr (\k mp -> D.delete k mp) m lookupKeys) dMap,
-           bench "IntervalMap" $ nf (\m -> foldr (\k mp -> M.delete k mp) m lookupKeys) dIvMap
+           bench "deleteMin Data.Map"    $ nf (bogoSize D.null D.deleteMin) dMap,
+           bench "deleteMax Data.Map"    $ nf (bogoSize D.null D.deleteMax) dMap,
+           bench "deleteMin IntervalMap" $ nf (bogoSize M.null M.deleteMin) dIvMap,
+           bench "deleteMax IntervalMap" $ nf (bogoSize M.null M.deleteMax) dIvMap,
+           bench "minView Data.Map"      $ nf (unfold D.minView) dMap,
+           bench "maxView Data.Map"      $ nf (unfold D.maxView) dMap,
+           bench "minView IntervalMap"   $ nf (unfold M.minView) dIvMap,
+           bench "maxView IntervalMap"   $ nf (unfold M.maxView) dIvMap,
+           bench "delete Data.Map"       $ nf (\m -> foldr (\k mp -> D.delete k mp) m lookupKeys) dMap,
+           bench "delete IntervalMap"    $ nf (\m -> foldr (\k mp -> M.delete k mp) m lookupKeys) dIvMap
          ]
        ]
+
+bogoSize :: (m -> Bool) -> (m -> m) -> m -> Int
+bogoSize isEmpty shrink d = go 0 d
+  where go r m | isEmpty m    = r
+               | otherwise = go (r + 1) (shrink m)
+
+unfold :: (m -> Maybe (x,m)) -> m -> [x]
+unfold view m = case view m of
+                  Nothing     -> []
+                  Just (x,m') -> x : unfold view m'
