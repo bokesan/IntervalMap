@@ -42,7 +42,7 @@ benchConfig :: Config
 benchConfig =  defaultConfig { cfgReport = ljust "bench-all.html" }
 
 cDATA_SIZE :: Int
-cDATA_SIZE =  100000
+cDATA_SIZE =  10000
 
 
 main :: IO ()
