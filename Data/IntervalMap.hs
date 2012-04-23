@@ -566,53 +566,68 @@ findLast t@(Node _ _ mx _ _ _) = lastMax
     sameU a b = upperBound a == upperBound b && rightClosed a == rightClosed b
 
 
--- use our own Either type for readability
-data DeleteResult k v = Unchanged !(IntervalMap k v)
-                      | Shrunk !(IntervalMap k v)
+-- Type to indicate whether the number of black nodes changed or stayed the same.
+data DeleteResult k v = U !(IntervalMap k v)   -- Unchanged
+                      | S !(IntervalMap k v)   -- Shrunk
+
+unwrap :: DeleteResult k v -> IntervalMap k v
+unwrap (U m) = m
+unwrap (S m) = m
+
+-- DeleteResult with value
+data DeleteResult' k v a = U' !(IntervalMap k v) a
+                         | S' !(IntervalMap k v) a
+
+unwrap' :: DeleteResult' k v a -> IntervalMap k v
+unwrap' (U' m _) = m
+unwrap' (S' m _) = m
+
+-- annotate DeleteResult with value
+annotate :: DeleteResult k v -> a -> DeleteResult' k v a
+annotate (U m) x = U' m x
+annotate (S m) x = S' m x
 
 
 -- | /O(log n)/. Remove the smallest key from the map. Return the empty map if the map is empty.
 deleteMin :: (Ord k) => IntervalMap k v -> IntervalMap k v
 deleteMin Nil = Nil
-deleteMin mp = case deleteMin' mp of
-                 (Unchanged r, _, _) -> turnBlack r
-                 (Shrunk r, _, _)    -> turnBlack r
+deleteMin m   = turnBlack (unwrap' (deleteMin' m))
 
-deleteMin' :: Ord k => IntervalMap k v -> (DeleteResult k v, Interval k, v)
+deleteMin' :: Ord k => IntervalMap k v -> DeleteResult' k v (Interval k, v)
 deleteMin' Nil = error "deleteMin': Nil"
-deleteMin' (Node B k _ v Nil Nil) = (Shrunk Nil, k, v)
-deleteMin' (Node B k _ v Nil r@(Node R _ _ _ _ _)) = (Unchanged (turnBlack r), k, v)
-deleteMin' (Node R k _ v Nil r) = (Unchanged r, k, v)
+deleteMin' (Node B k _ v Nil Nil) = S' Nil (k,v)
+deleteMin' (Node B k _ v Nil r@(Node R _ _ _ _ _)) = U' (turnBlack r) (k,v)
+deleteMin' (Node R k _ v Nil r) = U' r (k,v)
 deleteMin' (Node c k _ v l r) =
   case deleteMin' l of
-    (Unchanged l', rk, rv) -> (Unchanged (mNode c k v l' r), rk, rv)
-    (Shrunk l',    rk, rv) -> (unbalancedR c k v l' r, rk, rv)
+    (U' l' kv) -> U' (mNode c k v l' r) kv
+    (S' l' kv) -> annotate (unbalancedR c k v l' r) kv
 
-deleteMax' :: Ord k => IntervalMap k v -> (DeleteResult k v, Interval k, v)
+deleteMax' :: Ord k => IntervalMap k v -> DeleteResult' k v (Interval k, v)
 deleteMax' Nil = error "deleteMax': Nil"
-deleteMax' (Node B k _ v Nil Nil) = (Shrunk Nil, k, v)
-deleteMax' (Node B k _ v l@(Node R _ _ _ _ _) Nil) = (Unchanged (turnBlack l), k, v)
-deleteMax' (Node R k _ v l Nil) = (Unchanged l, k, v)
+deleteMax' (Node B k _ v Nil Nil) = S' Nil (k,v)
+deleteMax' (Node B k _ v l@(Node R _ _ _ _ _) Nil) = U' (turnBlack l) (k,v)
+deleteMax' (Node R k _ v l Nil) = U' l (k,v)
 deleteMax' (Node c k _ v l r) =
   case deleteMax' r of
-    (Unchanged r', rk, rv) -> (Unchanged (mNode c k v l r'), rk, rv)
-    (Shrunk    r', rk, rv) -> (unbalancedL c k v l r', rk, rv)
+    (U' r' kv) -> U' (mNode c k v l r') kv
+    (S' r' kv) -> annotate (unbalancedL c k v l r') kv
 
 -- The left tree lacks one Black node
 unbalancedR :: Ord k => Color -> Interval k -> v -> IntervalMap k v -> IntervalMap k v -> DeleteResult k v
 -- Decreasing one Black node in the right
-unbalancedR B k v l r@(Node B _ _ _ _ _) = Shrunk    (balanceR B k v l (turnRed r))
-unbalancedR R k v l r@(Node B _ _ _ _ _) = Unchanged (balanceR B k v l (turnRed r))
+unbalancedR B k v l r@(Node B _ _ _ _ _) = S (balanceR B k v l (turnRed r))
+unbalancedR R k v l r@(Node B _ _ _ _ _) = U (balanceR B k v l (turnRed r))
 -- Taking one Red node from the right and adding it to the right as Black
 unbalancedR B k v l (Node R rk _ rv rl@(Node B _ _ _ _ _) rr)
-  = Unchanged (mNode B rk rv (balanceR B k v l (turnRed rl)) rr)
+  = U (mNode B rk rv (balanceR B k v l (turnRed rl)) rr)
 unbalancedR _ _ _ _ _ = error "unbalancedR"
 
 unbalancedL :: Ord k => Color -> Interval k -> v -> IntervalMap k v -> IntervalMap k v -> DeleteResult k v
-unbalancedL B k v l@(Node B _ _ _ _ _) r = Shrunk    (balanceL B k v (turnRed l) r)
-unbalancedL R k v l@(Node B _ _ _ _ _) r = Unchanged (balanceL B k v (turnRed l) r)
+unbalancedL R k v l@(Node B _ _ _ _ _) r = U (balanceL B k v (turnRed l) r)
+unbalancedL B k v l@(Node B _ _ _ _ _) r = S (balanceL B k v (turnRed l) r)
 unbalancedL B k v (Node R lk _ lv ll lr@(Node B _ _ _ _ _)) r
-  = Unchanged (mNode B lk lv ll (balanceL B k v (turnRed lr) r))
+  = U (mNode B lk lv ll (balanceL B k v (turnRed lr) r))
 unbalancedL _ _ _ _ _ = error "unbalancedL"
 
 
@@ -620,21 +635,19 @@ unbalancedL _ _ _ _ _ = error "unbalancedL"
 -- | /O(log n)/. Remove the largest key from the map. Return the empty map if the map is empty.
 deleteMax :: (Ord k) => IntervalMap k v -> IntervalMap k v
 deleteMax Nil = Nil
-deleteMax mp = case deleteMax' mp of
-                 (Unchanged r, _ , _) -> turnBlack r
-                 (Shrunk    r, _ , _) -> turnBlack r
+deleteMax m   = turnBlack (unwrap' (deleteMax' m))
 
 -- | /O(log n)/. Delete and return the smallest key.
 deleteFindMin :: (Ord k) => IntervalMap k v -> ((Interval k,v), IntervalMap k v)
 deleteFindMin mp = case deleteMin' mp of
-                     (Unchanged r, k, v) -> ((k,v), turnBlack r)
-                     (Shrunk    r, k, v) -> ((k,v), turnBlack r)
+                     (U' r v) -> (v, turnBlack r)
+                     (S' r v) -> (v, turnBlack r)
 
 -- | /O(log n)/. Delete and return the largest key.
 deleteFindMax :: (Ord k) => IntervalMap k v -> ((Interval k,v), IntervalMap k v)
 deleteFindMax mp = case deleteMax' mp of
-                     (Unchanged r, k, v) -> ((k,v), turnBlack r)
-                     (Shrunk    r, k, v) -> ((k,v), turnBlack r)
+                     (U' r v) -> (v, turnBlack r)
+                     (S' r v) -> (v, turnBlack r)
 
 -- | /O(log n)/. Update or delete value at minimum key.
 updateMin :: Ord k => (v -> Maybe v) -> IntervalMap k v -> IntervalMap k v
@@ -768,29 +781,27 @@ foldlWithKey' f z m = z `seq` case m of
 -- | /O(log n)/. Delete a key from the map. If the map does not contain the key,
 -- it is returned unchanged.
 delete :: (Ord k) => Interval k -> IntervalMap k v -> IntervalMap k v
-delete key mp = case delete' key mp of
-                  Unchanged r -> turnBlack r
-                  Shrunk r    -> turnBlack r
+delete key mp = turnBlack (unwrap (delete' key mp))
 
 delete' :: Ord k => Interval k -> IntervalMap k v -> DeleteResult k v
-delete' x Nil = x `seq` Unchanged Nil
+delete' x Nil = x `seq` U Nil
 delete' x (Node c k _ v l r) =
   case compare x k of
     LT -> case delete' x l of
-            (Unchanged l') -> Unchanged (mNode c k v l' r)
-            (Shrunk l')    -> unbalancedR c k v l' r
+            (U l') -> U (mNode c k v l' r)
+            (S l')    -> unbalancedR c k v l' r
     GT -> case delete' x r of
-            (Unchanged r') -> Unchanged (mNode c k v l r')
-            (Shrunk r')    -> unbalancedL c k v l r'
+            (U r') -> U (mNode c k v l r')
+            (S r')    -> unbalancedL c k v l r'
     EQ -> case r of
-            Nil -> if c == B then blackify l else Unchanged l
+            Nil -> if c == B then blackify l else U l
             _ -> case deleteMin' r of
-                   (Unchanged r', rk, rv) -> Unchanged (mNode c rk rv l r')
-                   (Shrunk r', rk, rv) -> unbalancedL c rk rv l r'
+                   (U' r' (rk,rv)) -> U (mNode c rk rv l r')
+                   (S' r' (rk,rv)) -> unbalancedL c rk rv l r'
 
 blackify :: IntervalMap k v -> DeleteResult k v
-blackify s@(Node R _ _ _ _ _) = Unchanged (turnBlack s)
-blackify s                    = Shrunk s
+blackify (Node R k m v l r) = U (Node B k m v l r)
+blackify s                  = S s
 
 -- | /O(log n)/. Update a value at a specific key with the result of the provided function.
 -- When the key is not
