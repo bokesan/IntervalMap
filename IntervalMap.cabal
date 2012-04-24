@@ -12,7 +12,7 @@ Copyright:           Copyright 2011 Christoph Breitkopf
 Category:            Data
 Build-type:          Simple
 Cabal-version:       >= 1.8
-Tested-With:         GHC==7.0.4, GHC==6.12.1
+Tested-With:         GHC==7.4.1, GHC==7.0.4, GHC==6.12.1
 Description:
                      A map from intervals to values, with efficient search
                      for all keys containing a point or overlapping an interval.

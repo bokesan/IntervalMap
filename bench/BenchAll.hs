@@ -7,8 +7,9 @@ import System.Random
 import Data.Foldable (foldr)
 import Data.List (sort)
 
-import Data.Map as D hiding (foldr)
-import Data.IntervalMap as M hiding (foldr)
+import Data.IntervalMap.Interval
+import qualified Data.Map as D
+import qualified Data.IntervalMap as M
 
 
 seed :: Int
