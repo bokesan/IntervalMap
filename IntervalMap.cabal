@@ -52,3 +52,7 @@ benchmark bench-all
                       containers, random, deepseq,
                       criterion >= 0.6 && < 0.7
   ghc-options: -Wall
+
+source-repository head
+  type:     darcs
+  location: http://www.chr-breitkopf.de/repos/IntervalMap
