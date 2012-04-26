@@ -996,34 +996,40 @@ combineEq f (x@(xk,xv) : xs@((yk,yv) : xs'))
   | xk == yk  = combineEq f ((xk, f xk xv yv) : xs')
   | otherwise = x : combineEq f xs
 
+
+-- Strict tuple
+data T2 a b = T2 !a !b
+
+
 -- | /O(n)/. Build a map from an ascending list of elements with distinct keys in linear time.
 -- /The precondition is not checked./
 fromDistinctAscList :: (Ord k) => [(Interval k,v)] -> IntervalMap k v
 -- exactly 2^n-1 items have height n. They can be all black
 -- from 2^n - 2^n-2 items have height n+1. The lowest "row" should be red.
 fromDistinctAscList lyst = case h (length lyst) lyst of
-                             (result, []) -> result
+                             (T2 result []) -> result
                              _ -> error "fromDistinctAscList: list not fully consumed"
   where
-    h n xs | n == 0      = (Nil, xs)
+    h n xs | n == 0      = T2 Nil xs
            | isPerfect n = buildB n xs
            | otherwise   = buildR n (log2 n) xs
 
     buildB n xs | xs `seq` n <= 0 = error "fromDictinctAscList: buildB 0"
-                | n == 1     = case xs of ((k,v):xs') -> (Node B k k v Nil Nil, xs')
+                | n == 1     = case xs of ((k,v):xs') -> T2 (Node B k k v Nil Nil) xs'
                 | otherwise  =
                      case n `quot` 2 of { n' ->
-                     case buildB n' xs of { (l, (k,v):xs') ->
-                     case buildB n' xs' of { (r, xs'') ->
-                     (mNode B k v l r, xs'') }}}
+                     case buildB n' xs of { (T2 l ((k,v):xs')) ->
+                     case buildB n' xs' of { (T2 r xs'') ->
+                     T2 (mNode B k v l r) xs'' }}}
 
-    buildR n d xs | d `seq` xs `seq` n == 0 = (Nil, xs)
-                  | n == 1    = case xs of ((k,v):xs') -> (Node (if d==0 then R else B) k k v Nil Nil, xs')
+    buildR n d xs | d `seq` xs `seq` n == 0 = T2 Nil xs
+                  | n == 1    = case xs of ((k,v):xs') -> T2 (Node (if d==0 then R else B) k k v Nil Nil) xs'
                   | otherwise =
                       case n `quot` 2 of { n' ->
-                      case buildR n' (d-1) xs of { (l, (k,v):xs') ->
-                      case buildR (n - (n' + 1)) (d-1) xs' of { (r, xs'') ->
-                      (mNode B k v l r, xs'') }}}
+                      case buildR n' (d-1) xs of { (T2 l ((k,v):xs')) ->
+                      case buildR (n - (n' + 1)) (d-1) xs' of { (T2 r xs'') ->
+                      T2 (mNode B k v l r) xs'' }}}
+
 
 -- is n a perfect binary tree size (2^m-1)?
 isPerfect :: Int -> Bool
