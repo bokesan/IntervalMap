@@ -89,7 +89,13 @@ main =
            bench "Data.Map Large/Small"    $ nf (\m -> D.union m dMapSmall) dMap,
            bench "Data.Map Small/Large"    $ nf (\m -> D.union dMapSmall m) dMap,
            bench "IntervalMap Large/Small" $ nf (\m -> M.union m dIvMapSmall) dIvMap,
-           bench "IntervalMap Small/Large" $ nf (\m -> M.union dIvMapSmall m) dIvMap
+           bench "IntervalMap Small/Large" $ nf (\m -> M.union dIvMapSmall m) dIvMap,
+           bench "Data.Map Large/Empty"    $ nf (\m -> D.union m D.empty) dMap,
+           bench "Data.Map Empty/Large"    $ nf (\m -> D.union D.empty m) dMap,
+           bench "IntervalMap Large/Empty" $ nf (\m -> M.union m M.empty) dIvMap,
+           bench "IntervalMap Empty/Large" $ nf (\m -> M.union M.empty m) dIvMap,
+           bench "Data.Map self"    $ nf (\m -> D.union m m) dMap,
+           bench "IntervalMap self" $ nf (\m -> M.union m m) dIvMap
          ],
          bgroup "intersection" [
            bench "Data.Map Large/Small"    $ nf (\m -> D.intersection m dMapSmall) dMap,
