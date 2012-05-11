@@ -95,8 +95,8 @@ module Data.IntervalMap (
             -- * Combine
 
             -- ** Union
-            , union         
-            , unionWith          
+            , union
+            , unionWith
             , unionWithKey
             , unions
             , unionsWith
@@ -107,7 +107,7 @@ module Data.IntervalMap (
             , differenceWithKey
             
             -- ** Intersection
-            , intersection           
+            , intersection
             , intersectionWith
             , intersectionWithKey
 
@@ -133,7 +133,7 @@ module Data.IntervalMap (
             , keys
             , keysSet
             , assocs
-            
+
             -- ** Lists
             , toList
             , fromList
@@ -148,7 +148,7 @@ module Data.IntervalMap (
             , fromAscListWithKey
             , fromDistinctAscList
 
-            -- * Filter 
+            -- * Filter
             , filter
             , filterWithKey
             , partition
@@ -159,21 +159,12 @@ module Data.IntervalMap (
             , mapEither
             , mapEitherWithKey
 
-            , split         
-            , splitLookup   
+            , split
+            , splitLookup
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy
             , isProperSubmapOf, isProperSubmapOfBy
-
-            {-
-            -- * Indexed 
-            , lookupIndex
-            , findIndex
-            , elemAt
-            , updateAt
-            , deleteAt
-            -}
 
             -- * Min\/Max
             , findMin
@@ -859,7 +850,7 @@ alter f x m = case lookup x m of
 -- It prefers @t1@ when duplicate keys are encountered,
 -- i.e. (@'union' == 'unionWith' 'const'@).
 union :: Ord k => IntervalMap k a -> IntervalMap k a -> IntervalMap k a
-union m1 m2 = unionWith const m1 m2
+union m1 m2 = unionWithKey (\_ v _ -> v) m1 m2
 
 -- | /O(n+m)/. Union with a combining function.
 unionWith :: Ord k => (a -> a -> a) -> IntervalMap k a -> IntervalMap k a -> IntervalMap k a
