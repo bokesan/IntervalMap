@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.2.3.3
+Version:             0.3.0.0
 Stability:           experimental
 Synopsis:            Maps from Intervals to values, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
@@ -24,7 +24,8 @@ extra-source-files:
   examples/*.lhs
 
 Library
-  Exposed-modules:     Data.IntervalMap, Data.IntervalMap.Interval
+  Exposed-modules:     Data.IntervalMap, Data.IntervalMap.Lazy,
+                       Data.IntervalMap.Strict, Data.IntervalMap.Interval
   Build-depends:       base >= 4 && < 5, containers, deepseq
   ghc-options: -Wall
   if impl(ghc >= 6.8)

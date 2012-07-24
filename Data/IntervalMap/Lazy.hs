@@ -1,0 +1,189 @@
+-- |
+-- Module      :  Data.IntervalMap.Lazy
+-- Copyright   :  (c) Christoph Breitkopf 2011
+-- License     :  BSD-style
+-- Maintainer  :  chbreitkopf@googlemail.com
+-- Stability   :  experimental
+-- Portability :  portable
+--
+-- An implementation of maps from intervals to values. The key intervals may
+-- overlap, and the implementation contains efficient search functions
+-- for all keys containing a point or overlapping an interval.
+-- Closed, open, and half-open intervals can be contained in the same map.
+--
+-- An IntervalMap cannot contain duplicate keys - if you need to map a key
+-- to muiltiple values, use a collection as the value type, for
+-- example: @IntervalMap /k/ [/v/]@.
+--
+-- It is an error to insert an empty interval into a map. This precondition is not
+-- checked by the various construction functions.
+--
+-- Since many function names (but not the type name) clash with
+-- /Prelude/ names, this module is usually imported @qualified@, e.g.
+--
+-- >  import Data.IntervalMap (IvMap)
+-- >  import qualified Data.IntervalMap as IvMap
+--
+-- It offers most of the same functions as 'Data.Map', but uses 'Interval' /k/ instead of
+-- just /k/ as the key type. Some of the functions need stricter type constraints to
+-- maintain the additional information for efficient interval searching,
+-- for example 'fromDistinctAscList' needs an 'Ord' /k/ constraint.
+-- Also, some functions differ in asymptotic performance (for example 'size') or have not
+-- been tuned for efficiency as much as their equivalents in 'Data.Map' (in
+-- particular the various set functions).
+--
+-- In addition, there are functions specific to maps of intervals, for example to search
+-- for all keys containing a given point or contained in a given interval.
+--
+-- To stay compatible with standard Haskell, this implementation uses a fixed data
+-- type for intervals, and not a multi-parameter type class. Thus, it's currently
+-- not possible to define e.g. a 2-tuple as an instance of interval and use that
+-- map key. Instead, you must convert your keys to 'Interval'.
+--
+-- The implementation is a red-black tree augmented with the maximum upper bound
+-- of all keys.
+--
+-- Parts of this implementation are based on code from the 'Data.Map' implementation,
+-- (c) Daan Leijen 2002, (c) Andriy Palamarchuk 2008.
+-- The red-black tree deletion is based on code from llrbtree by Kazu Yamamoto.
+-- Of course, any errors are mine.
+--
+module Data.IntervalMap.Lazy (
+            -- * re-export
+            Interval(..)
+            -- * Map type
+            , IntervalMap      -- instance Eq,Show,Read
+
+            -- * Operators
+            , (!), (\\)
+
+            -- * Query
+            , M.null
+            , size
+            , member
+            , notMember
+            , M.lookup
+            , findWithDefault
+
+            -- ** Interval query
+            , containing
+            , intersecting
+            , within
+            
+            -- * Construction
+            , empty
+            , singleton
+
+            -- ** Insertion
+            , insert
+            , insertWith
+            , insertWithKey
+            , insertLookupWithKey
+            
+            -- ** Delete\/Update
+            , delete
+            , adjust
+            , adjustWithKey
+            , update
+            , updateWithKey
+            , updateLookupWithKey
+            , alter
+
+            -- * Combine
+
+            -- ** Union
+            , union
+            , unionWith
+            , unionWithKey
+            , unions
+            , unionsWith
+
+            -- ** Difference
+            , difference
+            , differenceWith
+            , differenceWithKey
+            
+            -- ** Intersection
+            , intersection
+            , intersectionWith
+            , intersectionWithKey
+
+            -- * Traversal
+            -- ** Map
+            , M.map
+            , mapWithKey
+            , mapAccum
+            , mapAccumWithKey
+            , mapAccumRWithKey
+            , mapKeys
+            , mapKeysWith
+            , mapKeysMonotonic
+
+            -- ** Fold
+            , M.foldr, M.foldl
+            , foldrWithKey, foldlWithKey
+
+            -- * Conversion
+            , elems
+            , keys
+            , keysSet
+            , assocs
+
+            -- ** Lists
+            , toList
+            , fromList
+            , fromListWith
+            , fromListWithKey
+
+            -- ** Ordered lists
+            , toAscList
+            , toDescList
+            , fromAscList
+            , fromAscListWith
+            , fromAscListWithKey
+            , fromDistinctAscList
+
+            -- * Filter
+            , M.filter
+            , filterWithKey
+            , partition
+            , partitionWithKey
+
+            , mapMaybe
+            , mapMaybeWithKey
+            , mapEither
+            , mapEitherWithKey
+
+            , split
+            , splitLookup
+
+            -- * Submap
+            , isSubmapOf, isSubmapOfBy
+            , isProperSubmapOf, isProperSubmapOfBy
+
+            -- * Min\/Max
+            , findMin
+            , findMax
+            , findLast
+            , deleteMin
+            , deleteMax
+            , deleteFindMin
+            , deleteFindMax
+            , updateMin
+            , updateMax
+            , updateMinWithKey
+            , updateMaxWithKey
+            , minView
+            , maxView
+            , minViewWithKey
+            , maxViewWithKey
+
+            -- * Debugging
+            , valid
+
+            -- * Testing
+            , height, maxHeight, showStats
+
+            ) where
+
+import Data.IntervalMap.Base as M
