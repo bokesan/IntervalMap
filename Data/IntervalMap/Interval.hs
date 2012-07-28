@@ -2,7 +2,7 @@
 -- Module      :  Data.IntervalMap.Interval
 -- Copyright   :  (c) Christoph Breitkopf 2011
 -- License     :  BSD-style
--- Maintainer  :  chris@chr-breitkopf.de
+-- Maintainer  :  chbreitkopf@gmail.com
 -- Stability   :  experimental
 -- Portability :  portable
 --

@@ -2,7 +2,7 @@
 -- Module      :  Data.IntervalMap.Lazy
 -- Copyright   :  (c) Christoph Breitkopf 2011
 -- License     :  BSD-style
--- Maintainer  :  chbreitkopf@googlemail.com
+-- Maintainer  :  chbreitkopf@gmail.com
 -- Stability   :  experimental
 -- Portability :  portable
 --
