@@ -15,7 +15,7 @@
 -- several value strict functions from 'Data.IntervalMap.Strict'.
 --
 -- An IntervalMap cannot contain duplicate keys - if you need to map a key
--- to muiltiple values, use a collection as the value type, for
+-- to multiple values, use a collection as the value type, for
 -- example: @IntervalMap /k/ [/v/]@.
 --
 -- It is an error to insert an empty interval into a map. This precondition is not
