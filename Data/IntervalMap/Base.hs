@@ -1081,12 +1081,7 @@ mapAccum f a m = mapAccumWithKey (\a' _ x' -> f a' x') a m
 -- > let f a k b = (a ++ " " ++ (show k) ++ "-" ++ b, b ++ "X")
 -- > mapAccumWithKey f "Everything:" (fromList [(5,"a"), (3,"b")]) == ("Everything: 3-b 5-a", fromList [(3, "bX"), (5, "aX")])
 mapAccumWithKey :: (a -> Interval k -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
-mapAccumWithKey f a t = mapAccumL f a t
-
--- | /O(n)/. The function 'mapAccumL' threads an accumulating
--- argument throught the map in ascending order of keys.
-mapAccumL :: (a -> Interval k -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
-mapAccumL f = go
+mapAccumWithKey f = go
   where
     go a Nil               = (a,Nil)
     go a (Node c kx m x l r) =
@@ -1095,7 +1090,7 @@ mapAccumL f = go
                      (a3,r') = go a2 r
                  in (a3, Node c kx m x' l' r')
 
--- | /O(n)/. The function 'mapAccumR' threads an accumulating
+-- | /O(n)/. The function 'mapAccumRWithKey' threads an accumulating
 -- argument through the map in descending order of keys.
 mapAccumRWithKey :: (a -> Interval k -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
 mapAccumRWithKey f = go
