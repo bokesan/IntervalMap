@@ -34,7 +34,7 @@ containing a point or intersecting a given interval.
 <p>You should normally install it from Hackage with <code>cabal install IntervalMap</code>.
 <br/>I try to keep the interface stable between minor releases, so if you have
 this as a dependency in a cabal project, use constraints like this:
-<pre>    Build-depends: IntervalMap &gt;= 0.2 &lt; 0.3</pre>
+<pre>    Build-depends: IntervalMap &gt;= 0.3 &lt; 0.4</pre>
 </p>
 
 <p>Here is the <a href="api/Data-IntervalMap.html">documentation</a>.</p>
@@ -42,7 +42,7 @@ this as a dependency in a cabal project, use constraints like this:
 <p><a href="Example.html">A simple example</a>.</p>
 
 <p>Current release:
-<a href="IntervalMap-0.2.3.3.tar.gz">IntervalMap-0.2.3.3.tar.gz</a>
+<a href="IntervalMap-0.3.0.0.tar.gz">IntervalMap-0.3.0.0.tar.gz</a>
 </p>
 
 <p>Darcs repository: <code>http://www.chr-breitkopf.de/repos/IntervalMap</code></p>
@@ -59,6 +59,12 @@ this as a dependency in a cabal project, use constraints like this:
 <h3>Version history</h3>
 
 <table border="1" cellpadding="5" cellspacing="0">
+  <tr valign="top">
+    <td><a href="IntervalMap-0.3.0.0.tar.gz">0.3.0.0</a></td>
+    <td>Split into Lazy and Strict modules, following
+      <a href="http://blog.johantibell.com/2012/05/new-major-release-of-containers-package.html">containers</a>.
+    </td>
+  </tr>
   <tr valign="top">
     <td><a href="IntervalMap-0.2.3.3.tar.gz">0.2.3.3</a></td>
     <td>2012-04-24</td>
