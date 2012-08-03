@@ -26,6 +26,7 @@ extra-source-files:
 Library
   Exposed-modules:     Data.IntervalMap, Data.IntervalMap.Lazy,
                        Data.IntervalMap.Strict, Data.IntervalMap.Interval
+  other-modules:       Data.IntervalMap.Base
   Build-depends:       base >= 4 && < 5, containers, deepseq
   ghc-options: -Wall
   if impl(ghc >= 6.8)
