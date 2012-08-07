@@ -77,11 +77,8 @@ module Data.IntervalMap.Base (
             -- ** Insertion
             , insert
             , insertWith
-            , insertWith'
             , insertWithKey
-            , insertWithKey'
             , insertLookupWithKey
-            , insertLookupWithKey'
             
             -- ** Delete\/Update
             , delete
@@ -187,6 +184,7 @@ module Data.IntervalMap.Base (
             , Color(..)
             , balanceL, balanceR
             , turnBlack
+            , setMinValue, setMaxValue
 
             -- * Debugging
             , valid
@@ -433,7 +431,7 @@ t `within` iv = go [] iv t
 -- | /O(log n)/. Insert a new key/value pair. If the map already contains the key, its value is
 -- changed to the new value.
 insert :: (Ord k) => Interval k -> v -> IntervalMap k v -> IntervalMap k v
-insert =  insertWithKey' (\_ v _ -> v)
+insert =  insertWithKey (\_ v _ -> v)
 
 -- | /O(log n)/. Insert with a function, combining new value and old value.
 -- @'insertWith' f key value mp@ 
@@ -442,11 +440,6 @@ insert =  insertWithKey' (\_ v _ -> v)
 -- insert the pair @(key, f new_value old_value)@.
 insertWith :: (Ord k) => (v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
 insertWith f = insertWithKey (\_ new old -> f new old)
-
--- | Same as 'insertWith', but the combining function is applied strictly.
--- This is often the most desirable behavior.
-insertWith' :: (Ord k) => (v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
-insertWith' f = insertWithKey' (\_ new old -> f new old)
 
 -- | /O(log n)/. Insert with a function, combining key, new value and old value.
 -- @'insertWithKey' f key value mp@ 
@@ -465,19 +458,6 @@ insertWithKey f key value mp  =  key `seq` turnBlack (ins mp)
         GT -> balanceR color k v l (ins r)
         EQ -> Node color k m (f k value v) l r
 
--- | Same as 'insertWithKey', but the combining function is applied strictly.
-insertWithKey' :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> IntervalMap k v
-insertWithKey' f key value mp  =  key `seq` turnBlack (ins mp)
-  where
-    singletonR k v = Node R k k v Nil Nil
-    ins Nil = value `seq` singletonR key value
-    ins (Node color k m v l r) =
-      case compare key k of
-        LT -> balanceL color k v (ins l) r
-        GT -> balanceR color k v l (ins r)
-        EQ -> let v' = f k value v in v' `seq` Node color k m v' l r
-
-
 -- | /O(log n)/. Combine insert with old values retrieval.
 insertLookupWithKey :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> (Maybe v, IntervalMap k v)
 insertLookupWithKey f key value mp  =  key `seq` (oldval, turnBlack mp')
@@ -494,23 +474,6 @@ insertLookupWithKey f key value mp  =  key `seq` (oldval, turnBlack mp')
                  (x@(Just _), t') -> (x, Node color k m v l t')
                  (Nothing, t') -> (Nothing, balanceR color k v l t')
         EQ -> (Just v, Node color k m (f k value v) l r)
-
--- | /O(log n)/. A strict version of 'insertLookupWithKey'.
-insertLookupWithKey' :: (Ord k) => (Interval k -> v -> v -> v) -> Interval k -> v -> IntervalMap k v -> (Maybe v, IntervalMap k v)
-insertLookupWithKey' f key value mp  =  key `seq` (oldval, turnBlack mp')
-  where
-    (oldval, mp') = ins mp
-    singletonR k v = Node R k k v Nil Nil
-    ins Nil = value `seq` (Nothing, singletonR key value)
-    ins (Node color k m v l r) =
-      case compare key k of
-        LT -> case ins l of
-                 (x@(Just _), t') -> (x, Node color k m v t' r)
-                 (Nothing, t') -> (Nothing, balanceL color k v t' r)
-        GT -> case ins r of
-                 (x@(Just _), t') -> (x, Node color k m v l t')
-                 (Nothing, t') -> (Nothing, balanceR color k v l t')
-        EQ -> let v' = f k value v in v' `seq` (Just v, Node color k m v' l r)
 
 
 balanceL :: Ord k => Color -> Interval k -> v -> IntervalMap k v -> IntervalMap k v -> IntervalMap k v
