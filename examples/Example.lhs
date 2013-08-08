@@ -1,5 +1,7 @@
+<h1>IntervalMap usage example</h2>
+
 In this example I use an IntervalMap to store a set of appointments.
-The appointments are for several people, so it's clear that they can overlap.
+The appointments are for several people, so they can overlap.
 
 This is a literate Haskell file, you can [download it](Example.lhs) and compile it with
 ghc or run in in ghci. You must first install IntervalMap, if you have not already done so:
