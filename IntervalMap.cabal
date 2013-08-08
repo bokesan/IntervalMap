@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.3.0.1
+Version:             0.3.0.2
 Stability:           experimental
 Synopsis:            Maps from Intervals to values, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
@@ -12,7 +12,7 @@ Copyright:           Copyright 2011 Christoph Breitkopf
 Category:            Data
 Build-type:          Simple
 Cabal-version:       >= 1.8
-Tested-With:         GHC==7.4.2, GHC==7.0.4, GHC==6.12.1
+Tested-With:         GHC==7.6.3, GHC==7.4.2, GHC==7.0.4, GHC==6.12.1
 Description:
                      A map from intervals to values, with efficient search
                      for all keys containing a point or overlapping an interval.
@@ -57,4 +57,4 @@ benchmark bench-all
 
 source-repository head
   type:     darcs
-  location: http://www.chr-breitkopf.de/repos/IntervalMap
+  location: http://hub.darcs.net/bokesan/IntervalMap
