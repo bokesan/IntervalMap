@@ -1,7 +1,7 @@
 Maps with intervals as keys offering efficient search.
 
 Home page:
-http://www.chr-breitkopf.de/comp/haskell/index.html#IntervalMap
+http://www.chr-breitkopf.de/comp/IntervalMap/index.html
 
 
 Install from hackage with cabal install.
@@ -14,5 +14,5 @@ $ cabal test
 
 --
 Christoph Breitkopf <chbreitkopf@gmail.com>
-Last edit: 2011-12-09
+Last edit: 2014-07-30
 
