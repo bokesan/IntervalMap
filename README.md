@@ -2,7 +2,7 @@
 
 Maps with intervals as keys offering efficient search.
 
-Home page and documentation: http://www.chr-breitkopf.de/comp/IntervalMap/index.html
+Home page and documentation: [http://www.chr-breitkopf.de/comp/IntervalMap/index.html](http://www.chr-breitkopf.de/comp/IntervalMap/index.html)
 
 
 Install from hackage with cabal install.
