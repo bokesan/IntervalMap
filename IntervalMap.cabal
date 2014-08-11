@@ -19,7 +19,7 @@ Description:
                      See the example code on the home page for a quick introduction.
 
 extra-source-files:
-  README
+  README.md
   test/*.hs
   examples/*.lhs
 
