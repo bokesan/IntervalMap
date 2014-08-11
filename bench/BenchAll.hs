@@ -1,5 +1,5 @@
 import Criterion.Main
-import Criterion.Config
+import Criterion.Types (Config(..))
 
 import Control.DeepSeq
 import Prelude hiding (lookup, max, foldr)
@@ -40,7 +40,7 @@ move n = fmap (n+)
 
 -- always write a report to bench-all.html.
 benchConfig :: Config
-benchConfig =  defaultConfig { cfgReport = ljust "bench-all.html" }
+benchConfig =  defaultConfig { reportFile = Just "bench-all.html" }
 
 cDATA_SIZE :: Int
 cDATA_SIZE =  10000
@@ -59,7 +59,7 @@ main =
       dMapSmall <- ensure $ D.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs2]
       dIvMapSmall <- ensure $ M.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs2]
       rndInts <- ensure (genRandomInts 1 cDATA_SIZE cDATA_SIZE)
-      defaultMainWith benchConfig (return ()) [
+      defaultMainWith benchConfig [
          bgroup "fromList (insert)" [
            bench "Data.Map"        $ nf D.fromList ivsP,
            bench "IntervalMap"     $ nf M.fromList ivsP
