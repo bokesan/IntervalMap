@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 import Criterion.Main
 import Criterion.Types (Config(..))
 
@@ -10,6 +13,7 @@ import Data.List (sort)
 import Data.IntervalMap.Interval
 import qualified Data.Map as D
 import qualified Data.IntervalMap as M
+import qualified Data.IntervalMap.Generic.Lazy as G
 
 
 seed :: Int
@@ -45,6 +49,10 @@ benchConfig =  defaultConfig { reportFile = Just "bench-all.html" }
 cDATA_SIZE :: Int
 cDATA_SIZE =  10000
 
+instance Ord a => G.Interval (a,a) a where
+  lowerBound (a,_) = a
+  upperBound (_,a) = a
+
 
 main :: IO ()
 main =
@@ -52,28 +60,38 @@ main =
       let ivs  = genRandomIntervals cDATA_SIZE 20 cDATA_SIZE
       let ivs2 = genRandomIntervals cDATA_SIZE 20 (cDATA_SIZE `quot` 2)
       ivsP   <- ensure $ [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs]
+      ivsG   <- ensure $ [(iv,lo) | iv@(lo,_) <- ivs]
       oIvsP  <- ensure $ sort ivsP
+      oIvsG  <- ensure $ sort ivsG
       lookupKeys <- ensure $ [i | (i,_) <- ivsP]
+      lookupKeysG <- ensure $ [i | (i,_) <- ivsG]
       dMap   <- ensure $ D.fromList ivsP
       dIvMap <- ensure $ M.fromList ivsP
+      gIvMap <- ensure $ G.fromList ivsG
       dMapSmall <- ensure $ D.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs2]
       dIvMapSmall <- ensure $ M.fromList [(ClosedInterval lo hi, lo) | (lo,hi) <- ivs2]
       rndInts <- ensure (genRandomInts 1 cDATA_SIZE cDATA_SIZE)
       defaultMainWith benchConfig [
          bgroup "fromList (insert)" [
            bench "Data.Map"        $ nf D.fromList ivsP,
-           bench "IntervalMap"     $ nf M.fromList ivsP
+           bench "IntervalMap"     $ nf M.fromList ivsP,
+           bench "IMGeneric"       $ nf G.fromList ivsG
          ],
          bgroup "fromAscList" [
            bench "Data.Map"        $ nf D.fromAscList oIvsP,
-           bench "IntervalMap"     $ nf M.fromAscList oIvsP
+           bench "IntervalMap"     $ nf M.fromAscList oIvsP,
+           bench "IMGeneric"       $ nf G.fromAscList oIvsG
          ],
          bgroup "search" [
            bench "lookup Data.Map" $ nf (\m -> [D.lookup i m | i <- lookupKeys]) dMap,
            bench "lookup"          $ nf (\m -> [M.lookup i m | i <- lookupKeys]) dIvMap,
            bench "containing"      $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.containing` p]) dIvMap,
            bench "intersecting"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.intersecting` (ClosedInterval p (p+15))]) dIvMap,
-           bench "within" $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.within` (ClosedInterval p (p+15))]) dIvMap
+           bench "within" $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.within` (ClosedInterval p (p+15))]) dIvMap,
+           bench "G lookup"          $ nf (\m -> [G.lookup i m | i <- lookupKeysG]) gIvMap,
+           bench "G containing"      $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `G.containing` p]) gIvMap,
+           bench "G intersecting"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `G.intersecting` (p, p+15)]) gIvMap,
+           bench "G within" $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `G.within` (p, p+15)]) gIvMap
          ],
          bgroup "mapKeys" [
            bench "Data.Map"              $ nf (D.mapKeys (move 1)) dMap,
@@ -94,6 +112,8 @@ main =
            bench "Data.Map Empty/Large"    $ nf (\m -> D.union D.empty m) dMap,
            bench "IntervalMap Large/Empty" $ nf (\m -> M.union m M.empty) dIvMap,
            bench "IntervalMap Empty/Large" $ nf (\m -> M.union M.empty m) dIvMap,
+           bench "IMGeneric Large/Empty" $ nf (\m -> G.union m G.empty) gIvMap,
+           bench "IMGeneric Empty/Large" $ nf (\m -> G.union G.empty m) gIvMap,
            bench "Data.Map self"    $ nf (\m -> D.union m m) dMap,
            bench "IntervalMap self" $ nf (\m -> M.union m m) dIvMap
          ],

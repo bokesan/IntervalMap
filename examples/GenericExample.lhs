@@ -1,4 +1,4 @@
-<h1>IntervalMap usage example</h1>
+<h1>IntervalMap.generic usage example</h1>
 
 In this example I use an IntervalMap to store a set of appointments.
 The appointments are for several people, so they can overlap.
@@ -7,9 +7,12 @@ This is a literate Haskell file, you can [download it](Example.lhs) and compile 
 ghc or run in in ghci. You must first install IntervalMap, if you have not already done so:
 `cabal install IntervalMap`.
 
+> {-# LANGUAGE MultiParamTypeClasses #-}
+> {-# LANGUAGE FlexibleInstances #-}
+
 First I have to import the module:
 
-> import Data.IntervalMap
+> import Data.IntervalMap.Generic.Strict
 
 For readability, here are simple type synonyms for our data types. In production
 code, one would of course use newtype or data for this.
@@ -21,14 +24,21 @@ Again for readability, I use strings to represent timestamps. Also, to keep it s
 I will omit the date and only use the time of the day in this example, e.g.: "09:00", "12:47".
 
 > type Time = String
-> type TimeSpan = Interval Time
+> type TimeSpan = (Time,Time)
 
 I have a time span include its start time but not its end time.
-So I use the *IntervalCO* constructor to get an interval that is closed at the startpoint
+So I declare an Interval instance for tuples that is closed at the startpoint
 but open at the endpoint:
 
+> instance Ord e => Interval (e,e) e where
+>   lowerBound (a,_) = a
+>   upperBound (_,b) = b
+>   rightClosed _ = False
+
+Constructing timespans is just using tuples:
+
 > mkTimeSpan :: Time -> Time -> TimeSpan
-> mkTimeSpan from to = IntervalCO from to
+> mkTimeSpan from to = (from,to)
 
 An appointment consists of the timespan, the person, and the appointment details:
 
@@ -37,7 +47,7 @@ An appointment consists of the timespan, the person, and the appointment details
 For a set of possible overlapping appointments, I store a list of (person, details)
 tuples for each timespan:
 
-> type Appointments = IntervalMap Time [(Person, Details)]
+> type Appointments = IntervalMap TimeSpan [(Person, Details)]
 
 Not that the key type is *Time*, not *TimeSpan*. That is, you specify the type of the
 endpoints, not the type of the interval itself.

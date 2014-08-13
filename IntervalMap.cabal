@@ -25,8 +25,11 @@ extra-source-files:
 
 Library
   Exposed-modules:     Data.IntervalMap, Data.IntervalMap.Lazy,
-                       Data.IntervalMap.Strict, Data.IntervalMap.Interval
-  other-modules:       Data.IntervalMap.Base
+                       Data.IntervalMap.Strict, Data.IntervalMap.Interval,
+                       Data.IntervalMap.Generic.Interval,
+                       Data.IntervalMap.Generic.Lazy,
+                       Data.IntervalMap.Generic.Strict
+  other-modules:       Data.IntervalMap.Base, Data.IntervalMap.Generic.Base
   Build-depends:       base >= 4 && < 5, containers, deepseq
   ghc-options: -Wall
   if impl(ghc >= 6.8)
@@ -35,6 +38,14 @@ Library
 Test-Suite TestInterval
   type:               exitcode-stdio-1.0
   main-is:            IntervalTests.hs
+  hs-source-dirs:     . test
+  build-depends:      base >= 4 && < 5, containers, deepseq,
+                      QuickCheck, Cabal >= 1.9.2
+
+
+Test-Suite TestGenericInterval
+  type:               exitcode-stdio-1.0
+  main-is:            GenericIntervalTests.hs
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
