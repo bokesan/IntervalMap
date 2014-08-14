@@ -98,7 +98,15 @@ compareU a b = case compare (upperBound a) (upperBound b) of
                          _ -> EQ
 
 instance Ord a => Interval (I.Interval a) a where
-  lowerBound = I.lowerBound
-  upperBound = I.upperBound
-  leftClosed = I.leftClosed
-  rightClosed = I.rightClosed
+    lowerBound  = I.lowerBound
+    upperBound  = I.upperBound
+    leftClosed  = I.leftClosed
+    rightClosed = I.rightClosed
+    overlaps    = I.overlaps
+    subsumes    = I.subsumes
+    before      = I.before
+    after       = I.after
+    above       = I.above
+    below       = I.below
+    inside      = I.inside
+    isEmpty     = I.isEmpty
