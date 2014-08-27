@@ -16,7 +16,7 @@ but with value-lazy semantics.
 -}
 module Data.IntervalMap.Lazy (
             -- * re-export
-            Interval(..)
+            I.Interval(..)
             -- * Map type
             , IntervalMap      -- instance Eq,Show,Read
 
@@ -152,4 +152,9 @@ module Data.IntervalMap.Lazy (
 
             ) where
 
-import Data.IntervalMap.Base as M
+import Data.IntervalMap.Interval as I
+import Data.IntervalMap.Generic.Lazy hiding (IntervalMap, null, filter, lookup, map, foldr, foldl)
+import qualified Data.IntervalMap.Generic.Lazy as M
+
+
+type IntervalMap k v = M.IntervalMap (I.Interval k) v

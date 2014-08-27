@@ -29,7 +29,7 @@ Library
                        Data.IntervalMap.Generic.Interval,
                        Data.IntervalMap.Generic.Lazy,
                        Data.IntervalMap.Generic.Strict
-  other-modules:       Data.IntervalMap.Base, Data.IntervalMap.Generic.Base
+  other-modules:       Data.IntervalMap.Generic.Base
   Build-depends:       base >= 4 && < 5, containers, deepseq
   ghc-options: -Wall
   if impl(ghc >= 6.8)
