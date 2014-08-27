@@ -970,17 +970,21 @@ fromDistinctAscList lyst = case h (length lyst) lyst of
 
     buildB n xs | xs `seq` n <= 0 = error "fromDictinctAscList: buildB 0"
                 | n == 1     = case xs of ((k,v):xs') -> T2 (Node B k k v Nil Nil) xs'
+                                          _ -> error "fromDictinctAscList: buildB 1"
                 | otherwise  =
                      case n `quot` 2 of { n' ->
-                     case buildB n' xs of { (T2 l ((k,v):xs')) ->
+                     case buildB n' xs of { (T2 _ []) -> error "fromDictinctAscList: buildB n";
+                                            (T2 l ((k,v):xs')) ->
                      case buildB n' xs' of { (T2 r xs'') ->
                      T2 (mNode B k v l r) xs'' }}}
 
     buildR n d xs | d `seq` xs `seq` n == 0 = T2 Nil xs
                   | n == 1    = case xs of ((k,v):xs') -> T2 (Node (if d==0 then R else B) k k v Nil Nil) xs'
+                                           _ -> error "fromDistinctAscList: buildR 1"
                   | otherwise =
                       case n `quot` 2 of { n' ->
-                      case buildR n' (d-1) xs of { (T2 l ((k,v):xs')) ->
+                      case buildR n' (d-1) xs of { (T2 _ []) -> error "fromDistinctAscList: buildR n";
+                                                   (T2 l ((k,v):xs')) ->
                       case buildR (n - (n' + 1)) (d-1) xs' of { (T2 r xs'') ->
                       T2 (mNode B k v l r) xs'' }}}
 
