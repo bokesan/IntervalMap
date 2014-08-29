@@ -7,10 +7,13 @@ This is a literate Haskell file, you can [download it](Example.lhs) and compile 
 ghc or run in in ghci. You must first install IntervalMap, if you have not already done so:
 `cabal install IntervalMap`.
 
+First, I have to enable some language extensions to be able to
+make my own interval type an instance of Interval:
+
 > {-# LANGUAGE MultiParamTypeClasses #-}
 > {-# LANGUAGE FlexibleInstances #-}
 
-First I have to import the module:
+In most cases, you should use the value-strict version, so I import that:
 
 > import Data.IntervalMap.Generic.Strict
 
