@@ -12,7 +12,7 @@
 -- Closed, open, and half-open intervals can be contained in the same map.
 --
 -- An IntervalMap cannot contain duplicate keys - if you need to map a key
--- to muiltiple values, use a collection as the value type, for
+-- to multiple values, use a collection as the value type, for
 -- example: @IntervalMap /k/ [/v/]@.
 --
 -- It is an error to insert an empty interval into a map. This precondition is not
@@ -21,14 +21,12 @@
 -- Since many function names (but not the type name) clash with
 -- /Prelude/ names, this module is usually imported @qualified@, e.g.
 --
--- >  import Data.IntervalMap (IvMap)
--- >  import qualified Data.IntervalMap as IvMap
+-- >  import Data.Generic.IntervalMap.Strict (IntervalMap)
+-- >  import qualified Data.Generic.IntervalMap.Strict as IM
 --
 -- It offers most of the same functions as 'Data.Map', but the key type must be an
--- instance of 'Interval'. Some of the functions need stricter type constraints to
--- maintain the additional information for efficient interval searching,
--- for example 'fromDistinctAscList' needs an 'Ord' /k/ constraint.
--- Also, some functions differ in asymptotic performance (for example 'size') or have not
+-- instance of 'Interval'.
+-- Some functions differ in asymptotic performance (for example 'size') or have not
 -- been tuned for efficiency as much as their equivalents in 'Data.Map' (in
 -- particular the various set functions).
 --

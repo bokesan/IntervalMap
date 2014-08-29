@@ -28,15 +28,12 @@ precondition is not checked by the various construction functions.
 Since many function names (but not the type name) clash with /Prelude/
 names, this module is usually imported @qualified@, e.g.
 
->  import Data.IntervalMap (IvMap)
->  import qualified Data.IntervalMap as IvMap
+>  import Data.Generic.IntervalMap.Strict (IntervalMap)
+>  import qualified Data.Generic.IntervalMap.Strict as IM
 
-It offers most of the same functions as 'Data.Map', but uses
-'Interval' /k/ instead of just /k/ as the key type. Some of the
-functions need stricter type constraints to maintain the additional
-information for efficient interval searching, for example
-'fromDistinctAscList' needs an 'Ord' /k/ constraint. Also, some
-functions differ in asymptotic performance (for example 'size') or
+It offers most of the same functions as 'Data.Map', but the
+key type must be an instance of 'Interval'.
+Some functions differ in asymptotic performance (for example 'size') or
 have not been tuned for efficiency as much as their equivalents in
 'Data.Map' (in particular the various set functions).
 

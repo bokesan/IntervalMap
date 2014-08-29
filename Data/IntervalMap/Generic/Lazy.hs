@@ -1,6 +1,6 @@
 {- |
 Module      :  Data.IntervalMap.Lazy
-Copyright   :  (c) Christoph Breitkopf 2011
+Copyright   :  (c) Christoph Breitkopf 2014
 License     :  BSD-style
 Maintainer  :  chbreitkopf@gmail.com
 Stability   :  experimental
@@ -11,7 +11,7 @@ overlap, and the implementation contains efficient search functions
 for all keys containing a point or overlapping an interval.
 Closed, open, and half-open intervals can be contained in the same map.
 
-This module implements the same functions as "Data.IntervalMap.Strict",
+This module implements the same functions as "Data.IntervalMap.Generic.Strict",
 but with value-lazy semantics.
 -}
 module Data.IntervalMap.Generic.Lazy (

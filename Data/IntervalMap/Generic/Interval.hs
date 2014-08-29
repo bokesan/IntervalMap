@@ -6,6 +6,12 @@
 -- Stability   :  experimental
 -- Portability :  portable
 --
+-- Type class for IntervalMap keys.
+--
+-- As there is no sensible default, no instances for prelude types
+-- are provided (E.g. you might want to have tuples as closed
+-- intervals in one case, and open in another).
+
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -20,13 +26,14 @@ import qualified Data.IntervalMap.Interval as I
 
 
 -- | Intervals with endpoints of type @e@.
--- A minimal instance declaration needs to define 'con', 'lowerBound', and 'upperBound'.
+-- A minimal instance declaration for a closed interval needs only
+-- to define 'lowerBound' and 'upperBound'.
 class Ord e => Interval i e | i -> e where
-  --  Construct interval from endpoints
-  -- con :: e -> e -> i e
+  -- | lower bound
+  lowerBound :: i -> e
 
-  -- | lower and upper bound
-  lowerBound, upperBound :: i -> e
+  -- | upper bound
+  upperBound :: i -> e
 
   -- | Does the interval include its lower bound?
   -- Default is True for all values, i.e. closed intervals.
@@ -38,25 +45,44 @@ class Ord e => Interval i e | i -> e where
   rightClosed :: i -> Bool
   rightClosed _ = True
 
-  overlaps, subsumes, before, after :: i -> i -> Bool
+  -- | Interval strictly before another?
+  -- True if the upper bound of the first interval is below the lower bound of the second.
+  before :: i -> i -> Bool
   a `before` b = upperBound a < lowerBound b
                  || (upperBound a == lowerBound b && not (rightClosed a && leftClosed b))
-  a `after` b  = lowerBound a > upperBound b
-                 || (lowerBound a == upperBound b && not (leftClosed a && rightClosed b))
+
+  -- | Interval strictly after another?
+  -- Same as 'flip before'.
+  after :: i -> i -> Bool
+  a `after` b  = b `before` a
+
+  -- | Does the first interval completely contain the second?
+  subsumes :: i -> i -> Bool
   a `subsumes` b = (lowerBound a < lowerBound b || (lowerBound a == lowerBound b && (leftClosed a || not (leftClosed b))))
                    &&
                    (upperBound a > upperBound b || (upperBound a == upperBound b && (rightClosed a || not (rightClosed b))))
+
+  -- | Do the two intervals overlap?
+  overlaps :: i -> i -> Bool
   a `overlaps` b = (lowerBound a < upperBound b || (lowerBound a == upperBound b && leftClosed a && rightClosed b))
                    &&
                    (upperBound a > lowerBound b || (upperBound a == lowerBound b && rightClosed a && leftClosed b))
 
-  above, below, inside :: e -> i -> Bool
+  -- | Is a point strictly less than lower bound?
+  below :: e -> i -> Bool
   p `below` i | leftClosed i  = p <  lowerBound i
               | otherwise     = p <= lowerBound i
+
+  -- | Is a point strictly greater than upper bound?
+  above :: e -> i -> Bool
   p `above` i | rightClosed i = p >  upperBound i
               | otherwise     = p >= upperBound i
+
+  -- | Does the interval contain a given point?
+  inside :: e -> i -> Bool
   p `inside` i = not ((p `above` i) || (p `below` i)) 
 
+  -- | Is the interval empty?
   isEmpty :: i -> Bool
   isEmpty i | leftClosed i && rightClosed i = lowerBound i >  upperBound i
             | otherwise                     = lowerBound i >= upperBound i
