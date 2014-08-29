@@ -52,9 +52,6 @@ tuples for each timespan:
 
 > type Appointments = IntervalMap TimeSpan [(Person, Details)]
 
-Not that the key type is *Time*, not *TimeSpan*. That is, you specify the type of the
-endpoints, not the type of the interval itself.
-
 Now I can define some helper functions.
 
 A set containing no appointments:
