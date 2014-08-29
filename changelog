@@ -1,0 +1,13 @@
+0.4.0.1  Documentation update. Wrong portability info fixed.
+
+0.4.0.0  Major update adding support for user-defined key intervals.
+
+0.3.0.3  Updated benchmark to use Criterion 1.0. Tested with ghc 7.8.3.
+
+0.3.0.2  Dropped upper constraint on criterion. Tested with ghc 7.6.3.
+         Migrated repo to Darcs Hub.
+
+0.3.0.1  Bugfixes: Lazy was too strict, Strict too lazy.
+
+0.3.0.0  Split into Lazy and Strict modules, following containers.
+
