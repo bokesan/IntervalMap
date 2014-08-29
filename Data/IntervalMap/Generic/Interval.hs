@@ -4,7 +4,7 @@
 -- License     :  BSD-style
 -- Maintainer  :  chbreitkopf@gmail.com
 -- Stability   :  experimental
--- Portability :  portable
+-- Portability :  non-portable (MPTC with FD)
 --
 -- Type class for IntervalMap keys.
 --

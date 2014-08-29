@@ -4,7 +4,7 @@ Copyright   :  (c) Christoph Breitkopf 2014
 License     :  BSD-style
 Maintainer  :  chbreitkopf@gmail.com
 Stability   :  experimental
-Portability :  portable
+Portability :  non-portable (MPTC with FD)
 
 An implementation of maps from intervals to values. The key intervals may
 overlap, and the implementation contains efficient search functions
