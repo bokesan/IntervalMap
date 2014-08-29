@@ -31,15 +31,19 @@ overlap, and the implementation supports efficient queries for all intervals
 containing a point or intersecting a given interval.
 </p>
 
-<p>You should normally install it from Hackage with <code>cabal install IntervalMap</code>.
+<p>You should normally install it from
+<a href="http://hackage.haskell.org/package/IntervalMap">Hackage</a>
+ with <code>cabal install IntervalMap</code>.
 <br/>I try to keep the interface stable between minor releases, so if you have
 this as a dependency in a cabal project, use constraints like this:
-<pre>    Build-depends: IntervalMap &gt;= 0.3 &lt; 0.4</pre>
+<pre>    Build-depends: IntervalMap &gt;= 0.4 &lt; 0.5</pre>
 </p>
 
 <p>Here is the <a href="api/Data-IntervalMap.html">documentation</a>.</p>
 
-<p><a href="Example.html">A simple example</a>.</p>
+<p><a href="GenericExample.html">A simple example</a>.
+(<a href="Example.html">Old version not requiring language extensions</a>)
+</p>
 
 <p><a href="http://hub.darcs.net/bokesan/IntervalMap">Source on Darcs Hub</a>.</p>
 
@@ -54,6 +58,17 @@ this as a dependency in a cabal project, use constraints like this:
 <h3>Version history</h3>
 
 <table border="1" cellpadding="5" cellspacing="0">
+  <tr valign="top">
+    <td>0.4.0.0</td>
+    <td>2014-08-29</td>
+    <td>Major update. It is now possible to use any type as key interval by
+        making it an instance
+        of <code>Data.IntervalMap.Generic.Interval</code>.
+        This requires the languages extensions <code>MultiParamTypeClasses</code>
+        and <code>FlexibleInstances</code>.
+        The old interface is still supported for compatibility.
+    </td>
+  </tr>
   <tr valign="top">
     <td>0.3.0.3</td>
     <td>2014-08-11</td>
