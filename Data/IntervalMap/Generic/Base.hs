@@ -198,7 +198,7 @@ import Data.Traversable (Traversable(traverse))
 import qualified Data.Foldable as Foldable
 import qualified Data.List as L
 import qualified Data.Set as Set
-import Control.DeepSeq (NFData(rnf))
+import Control.DeepSeq
 
 import Data.IntervalMap.Generic.Interval
 
@@ -258,7 +258,7 @@ instance Foldable.Foldable (IntervalMap k) where
 
 instance (NFData k, NFData a) => NFData (IntervalMap k a) where
     rnf Nil = ()
-    rnf (Node _ kx _ x l r) = rnf kx `seq` rnf x `seq` rnf l `seq` rnf r
+    rnf (Node _ kx _ x l r) = kx `deepseq` x `deepseq` l `deepseq` r `deepseq` ()
 
 instance (Ord k, Read k, Read e, Interval i k, Ord i, Read i) => Read (IntervalMap i e) where
   readsPrec p = readParen (p > 10) $ \ r -> do
