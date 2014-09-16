@@ -366,10 +366,6 @@ lookup k (Node _ key _ v l r) = case compare k key of
 -- | /O(log n)/. The expression @('findWithDefault' def k map)@ returns
 -- the value at key @k@ or returns default value @def@
 -- when the key is not in the map.
---
--- > findWithDefault 'x' 1 (fromList [(5,'a'), (3,'b')]) == 'x'
--- > findWithDefault 'x' 5 (fromList [(5,'a'), (3,'b')]) == 'a'
-
 findWithDefault :: Ord k => a -> k -> IntervalMap k a -> a
 findWithDefault def k m = case lookup k m of
     Nothing -> def
@@ -1029,17 +1025,11 @@ mapWithKey f = go
 
 -- | /O(n)/. The function 'mapAccum' threads an accumulating
 -- argument through the map in ascending order of keys.
---
--- > let f a b = (a ++ b, b ++ "X")
--- > mapAccum f "Everything: " (fromList [(5,"a"), (3,"b")]) == ("Everything: ba", fromList [(3, "bX"), (5, "aX")])
 mapAccum :: (a -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
 mapAccum f a m = mapAccumWithKey (\a' _ x' -> f a' x') a m
 
 -- | /O(n)/. The function 'mapAccumWithKey' threads an accumulating
 -- argument through the map in ascending order of keys.
---
--- > let f a k b = (a ++ " " ++ (show k) ++ "-" ++ b, b ++ "X")
--- > mapAccumWithKey f "Everything:" (fromList [(5,"a"), (3,"b")]) == ("Everything: 3-b 5-a", fromList [(3, "bX"), (5, "aX")])
 mapAccumWithKey :: (a -> k -> b -> (a,c)) -> a -> IntervalMap k b -> (a, IntervalMap k c)
 mapAccumWithKey f = go
   where
