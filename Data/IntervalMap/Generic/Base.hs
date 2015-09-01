@@ -208,6 +208,9 @@ import Data.IntervalMap.Generic.Interval
 infixl 9 !,\\ --
 
 -- | /O(log n)/. Lookup value for given key. Calls 'error' if the key is not in the map.
+--
+-- Use 'lookup' or 'findWithDefault' instead of this function, unless you are absolutely
+-- sure that the key is present in the map.
 (!) :: (Interval k e, Ord k) => IntervalMap k v -> k -> v
 tree ! key = case lookup key tree of
                Just v  -> v
