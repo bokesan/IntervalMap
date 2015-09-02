@@ -12,7 +12,7 @@ import Data.List (sort)
 
 import Data.IntervalMap.Generic.Interval
 import qualified Data.IntervalMap.Generic.Lazy as L
-import qualified Data.IntervalMap.Generic.Lazy as S
+import qualified Data.IntervalMap.Generic.Strict as S
 
 
 seed :: Int
