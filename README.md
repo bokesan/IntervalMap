@@ -7,7 +7,7 @@ Home page and documentation: [http://www.chr-breitkopf.de/comp/IntervalMap/index
 
 Install from hackage with cabal install.
 
-To run the tests, do extract the archive, and do
+To run the tests, extract the archive, and do
 
     $ cabal configure --enable-tests
     $ cabal build
