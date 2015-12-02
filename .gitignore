@@ -1,0 +1,9 @@
+*~
+*.hi
+*.o
+*.p_hi
+*.prof
+*.tix
+.hpc/
+/dist/
+/doc/
