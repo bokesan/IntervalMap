@@ -125,6 +125,8 @@ module Data.IntervalSet (
 
 import Prelude hiding (null, lookup, map, filter, foldr, foldl)
 import Data.Bits (shiftR, (.&.))
+import Data.Monoid (Monoid(..))
+import qualified Data.Foldable as Foldable
 import qualified Data.List as L
 import Control.DeepSeq
 import qualified Data.Foldable as Foldable
