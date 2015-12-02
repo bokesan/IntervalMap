@@ -1,4 +1,4 @@
-# IntervalMap
+# IntervalMap [![Build Status](https://travis-ci.org/bokesan/IntervalMap.svg?branch=master)](https://travis-ci.org/bokesan/IntervalMap)
 
 Maps with intervals as keys offering efficient search.
 
