@@ -66,7 +66,11 @@ prop_insert_size (IS s) iv =
       then size s' == size s
       else size s' == size s + 1
 
-prop_delete_gone (IS s) iv =      notMember iv (delete iv s)
+prop_delete (IS s) iv =           let s' = delete iv s in
+                                  valid s' &&
+                                  if notMember iv s then s' == s
+                                                    else all (\e -> e `member` s' || e == iv) (toList s)
+
 prop_list (IS s) =                s == fromList (toList s)
 prop_asclist (IS s) =             s == fromAscList (toAscList s)
 prop_desclist (IS s) =            toDescList s == reverse (toAscList s)
@@ -120,6 +124,7 @@ prop_mapMonotonic (IS s) n =      s == mapMonotonic (bump n) (mapMonotonic (bump
 prop_filter (IS s) iv =           filter (iv /=) s == delete iv s
 
 prop_partition (IS s) iv =        let (lo,hi) = partition (<= iv) s in
+                                  valid lo && valid hi &&
                                   all (<= iv) (toList lo) &&
                                   all (> iv) (toList hi) &&
                                   union lo hi == s
@@ -130,6 +135,7 @@ prop_split (IS s) iv =            let (lo,hi) = split iv s in
                                   union lo hi == if member iv s then delete iv s else s
 
 prop_splitMember (IS s) iv =      let (lo,m,hi) = splitMember iv s in
+                                  valid lo && valid hi &&
                                   m == member iv s &&
                                   all (< iv) (toList lo) &&
                                   all (> iv) (toList hi) &&
@@ -173,7 +179,7 @@ main = do
          check prop_isProperSubsetOf "properSubsetOf"
          check prop_insert_member "insert -> member"
          check prop_insert_size "insert + size"
-         check prop_delete_gone "delete"
+         check prop_delete "delete"
          check prop_list "toList/fromList"
          check prop_asclist "toAscList/fromAscList"
          check prop_desclist "toDescList"

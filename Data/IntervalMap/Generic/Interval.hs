@@ -11,6 +11,13 @@
 -- As there is no sensible default, no instances for prelude types
 -- are provided (E.g. you might want to have tuples as closed
 -- intervals in one case, and open in another).
+--
+-- Empty intervals, i.e. intervals where 'lowerBound >= upperBound' should be avoided
+-- if possible. If you must use empty intervals, you need to provide implementations
+-- for all operations, as the default implementations do not necessarily work correctly.
+-- for example, the default implementation of 'inside' returns 'True' if the point
+-- is equal to the lowerBound of a left-closed interval even if it is larger than
+-- the upper bound.
 
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -70,13 +77,17 @@ class Ord e => Interval i e | i -> e where
 
   -- | Is a point strictly less than lower bound?
   below :: e -> i -> Bool
-  p `below` i | leftClosed i  = p <  lowerBound i
-              | otherwise     = p <= lowerBound i
+  p `below` i = case compare p (lowerBound i) of
+                  LT -> True
+                  EQ -> not (leftClosed i)
+                  GT -> False
 
   -- | Is a point strictly greater than upper bound?
   above :: e -> i -> Bool
-  p `above` i | rightClosed i = p >  upperBound i
-              | otherwise     = p >= upperBound i
+  p `above` i = case compare p (upperBound i) of
+                  LT -> False
+                  EQ -> not (rightClosed i)
+                  GT -> True
 
   -- | Does the interval contain a given point?
   inside :: e -> i -> Bool

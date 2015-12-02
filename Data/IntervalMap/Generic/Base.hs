@@ -499,19 +499,17 @@ findMax (Node _ k _ v _ Nil) = (k,v)
 findMax (Node _ _ _ _ _ r) = findMax r
 findMax Nil = error "IntervalMap.findMin: empty map"
 
--- | Returns the interval with the largest endpoint.
--- If there is more than one interval with that endpoint,
--- return the rightmost.
+-- | Returns the key with the largest endpoint and its associated value.
+-- If there is more than one key with that endpoint, return the rightmost.
 --
 -- /O(n)/, since all keys could have the same endpoint.
 -- /O(log n)/ average case.
 findLast :: (Interval k e) => IntervalMap k v -> (k, v)
 findLast Nil = error "IntervalMap.findLast: empty map"
-findLast t@(Node _ _ mx _ _ _) = lastMax
+findLast t@(Node _ _ mx _ _ _) = head (go t)
   where
-    (lastMax : _) = go t
     go Nil = []
-    go (Node _ k m v l r) | sameU m mx = if sameU k m then go r ++ ((k,v) : go l)
+    go (Node _ k m v l r) | sameU m mx = if sameU k m then go r ++ [(k,v)]
                                                       else go r ++ go l
                           | otherwise  = []
     sameU a b = upperBound a == upperBound b && rightClosed a == rightClosed b
@@ -823,12 +821,20 @@ unionWithKey f m1 m2 = fromDistinctAscList (ascListUnion f (toAscList m1) (toAsc
 -- | The union of a list of maps:
 --   (@'unions' == 'Prelude.foldl' 'union' 'empty'@).
 unions :: (Interval k e, Ord k) => [IntervalMap k a] -> IntervalMap k a
-unions = L.foldl union empty
+unions ms = unionsWith const ms
 
 -- | The union of a list of maps, with a combining operation:
 --   (@'unionsWith' f == 'Prelude.foldl' ('unionWith' f) 'empty'@).
 unionsWith :: (Interval k e, Ord k) => (a -> a -> a) -> [IntervalMap k a] -> IntervalMap k a
-unionsWith f = L.foldl (unionWith f) empty
+unionsWith _ []  = empty
+unionsWith _ [m] = m
+unionsWith f ms = fromDistinctAscList (head (go (L.map toAscList ms)))
+  where
+    f' _ l r = f l r
+    merge m1 m2 = ascListUnion f' m1 m2
+    go [] = []
+    go xs@[_] = xs
+    go (x:y:xs) = go (merge x y : go xs)
 
 -- | /O(n+m)/. Difference of two maps. 
 -- Return elements of the first map not existing in the second map.
@@ -1072,7 +1078,7 @@ mapKeys f m = fromList [ (f k, v) | (k, v) <- toDescList m ]
 mapKeysWith :: (Interval k2 e, Ord k2) => (a -> a -> a) -> (k1 -> k2) -> IntervalMap k1 a -> IntervalMap k2 a
 mapKeysWith c f m = fromListWith c [ (f k, v) | (k, v) <- toAscList m ]
 
--- | /O(n log n)/. @'mapKeysMonotonic' f s == 'mapKeys' f s@, but works only when @f@
+-- | /O(n)/. @'mapKeysMonotonic' f s == 'mapKeys' f s@, but works only when @f@
 -- is strictly monotonic.
 -- That is, for any values @x@ and @y@, if @x@ < @y@ then @f x@ < @f y@.
 -- /The precondition is not checked./
@@ -1142,10 +1148,13 @@ split x m = (l, r)
 -- | /O(n)/. The expression (@'splitLookup' k map@) splits a map just
 -- like 'split' but also returns @'lookup' k map@.
 splitLookup :: (Interval i k, Ord i) => i -> IntervalMap i a -> (IntervalMap i a, Maybe a, IntervalMap i a)
-splitLookup x m = (fromDistinctAscList less, lookup x m, fromDistinctAscList greater)
-  where
-    less    = [e | e@(k,_) <- toAscList m, k < x]
-    greater = [e | e@(k,_) <- toAscList m, k > x]
+splitLookup x m = case span (\(k,_) -> k < x) (toAscList m) of
+                    ([], [])                        -> (empty, Nothing, empty)
+                    ([], ((k,v):_))     | k == x    -> (empty, Just v, deleteMin m)
+                                        | otherwise -> (empty, Nothing, m)
+                    (_, [])                         -> (m, Nothing, empty)
+                    (lt, ge@((k,v):gt)) | k == x    -> (fromDistinctAscList lt, Just v, fromDistinctAscList gt)
+                                        | otherwise -> (fromDistinctAscList lt, Nothing, fromDistinctAscList ge)
 
 -- submaps
 
