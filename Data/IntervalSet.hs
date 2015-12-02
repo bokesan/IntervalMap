@@ -21,7 +21,8 @@
 -- >  import qualified Data.IntervalSet.Strict as IS
 --
 -- It offers most of the same functions as 'Data.Set', but the member type must be an
--- instance of 'Interval'.
+-- instance of 'Interval'. The 'findMin' and 'findMax' functions deviate from their
+-- set counterparts in being total and returning a 'Maybe' value.
 -- Some functions differ in asymptotic performance (for example 'size') or have not
 -- been tuned for efficiency as much as their equivalents in 'Data.Set'.
 --
