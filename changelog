@@ -1,3 +1,8 @@
+0.4.1.0  Add IntervalSet.
+         Minor performance tweaks.
+         Documentation updates.
+         Moved to GitHub.
+
 0.4.0.1  Documentation update. Wrong portability info fixed.
 
 0.4.0.0  Major update adding support for user-defined key intervals.

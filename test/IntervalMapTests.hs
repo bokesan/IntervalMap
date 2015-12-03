@@ -125,6 +125,9 @@ prop_mapKeysWith (IMI m) = M.valid m' && all correct (M.keys m)
 -- check that our generator yields valid maps.
 prop_valid (IMI m) = M.valid m
 
+prop_singleton (II k) = let m = singleton k 'a' in
+                        m!k == 'a' && size m == 1
+
 prop_delete (IMI m) (II k) = let m' = M.delete k m in
                              M.valid m' &&
                              notMember k m' &&
@@ -330,7 +333,9 @@ prop_unionWithKey (IMI m1) (IMI m2) =  M.size m' == M.size m1 + numNotInM1 0 (M.
                         | otherwise     = numNotInM1 (n+1) ks
     
 
-prop_unions (IMI m1) (IMI m2) (IMI m3) = M.unions [m1,m2,m3] == (m1 `M.union` m2 `M.union` m3)
+prop_unions ims = M.unions ms == Prelude.foldl M.union empty ms
+  where ms = [m | IMI m <- ims]
+
 
 prop_difference (IMI m1) (IMI m2) =  M.valid m' && m' == Prelude.foldr M.delete m1 (M.keys m2)
   where m' = m1 M.\\ m2
@@ -387,6 +392,8 @@ prop_splitLookup (IMI m) (II x) = M.valid l && M.valid r
   where
     (l, value, r) = splitLookup x m
 
+prop_readShow (IMI m) = m == read (show m)
+
 
 checkElems :: Int -> Int -> [(Interval Int, Int)] -> Bool
 checkElems n len lyst = h n (n + len) lyst
@@ -411,6 +418,7 @@ main = do
           check prop_tests3 "tests3"
           check prop_mapKeys "mapKeys"
           check prop_valid "valid"
+          check prop_singleton "singleton"
           check prop_delete "delete"
           check prop_insert "insert"
           check prop_min "min"
@@ -447,6 +455,7 @@ main = do
           check prop_splitLookup "splitLookup"
           check prop_mapKeysWith "mapKeysWith"
           check prop_submap "submap"
+          check prop_readShow "read/show"
           putStrLn ("deep100L: " ++ show (M.showStats deep100L))
           putStrLn ("deep100R: " ++ show (M.showStats deep100R))
           exitSuccess

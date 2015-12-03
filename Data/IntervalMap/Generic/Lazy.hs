@@ -1,5 +1,5 @@
 {- |
-Module      :  Data.IntervalMap.Lazy
+Module      :  Data.IntervalMap.Generic.Lazy
 Copyright   :  (c) Christoph Breitkopf 2014
 License     :  BSD-style
 Maintainer  :  chbreitkopf@gmail.com
