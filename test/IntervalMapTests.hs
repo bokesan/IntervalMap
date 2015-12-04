@@ -153,6 +153,22 @@ prop_max (IMI m) = if M.null m then M.null (M.deleteMax m) else
                                       in notMember k m' && M.size m == M.size m' + 1
                                          && k == maximum (M.keys m) && valid m'
 
+prop_minViewWithKey (IMI m) = case minViewWithKey m of
+                                Nothing -> M.null m
+                                Just (kv, m') -> kv == findMin m && valid m' && m' == deleteMin m
+
+prop_maxViewWithKey (IMI m) = case maxViewWithKey m of
+                                Nothing -> M.null m
+                                Just (kv, m') -> kv == findMax m && valid m' && m' == deleteMax m
+
+prop_minView (IMI m) = case minView m of
+                         Nothing -> M.null m
+                         Just (v, m') -> v == snd (findMin m) && valid m' && m' == deleteMin m
+
+prop_maxView (IMI m) = case maxView m of
+                         Nothing -> M.null m
+                         Just (v, m') -> v == snd (findMax m) && valid m' && m' == deleteMax m
+
 prop_updateMin_u (IMI m) =
    let m' = M.updateMin (\v -> Just (v+1)) m in
    if M.null m then
@@ -430,6 +446,10 @@ main = do
           check prop_findMin "findMin"
           check prop_findMax "findMax"
           check prop_findLast "findLast"
+          check prop_minViewWithKey "minViewWithKey"
+          check prop_maxViewWithKey "maxViewWithKey"
+          check prop_minView "minView"
+          check prop_maxView "maxView"
           check prop_updateMin_u "updateMin update"
           check prop_updateMin_d "updateMin delete"
           check prop_updateMax_u "updateMax update"
