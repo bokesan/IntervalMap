@@ -1,3 +1,5 @@
+0.4.1.1  Fix bug in benchmark.
+
 0.4.1.0  Add IntervalSet.
          Minor performance tweaks.
          Documentation updates.
