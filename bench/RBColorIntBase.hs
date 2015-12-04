@@ -248,10 +248,9 @@ t `containing` pt = go [] pt t
     go xs p Nil = p `seq` xs
     go xs p (Node _ k m v l r)
        | p `above` m  =  xs         -- above all intervals in the tree: no result
-       | otherwise = case p `rel` k of
-                       LT -> go xs p l  -- to the left of the lower bound: can't be in right subtree
-                       EQ -> go ((k,v) : go xs p r) p l
-                       GT -> go (go xs p r) p l
+       | p `below` k  =  go xs p l  -- to the left of the lower bound: can't be in right subtree
+       | p `inside` k =  go ((k,v) : go xs p r) p l
+       | otherwise    =  go (go xs p r) p l
 
 -- | Return all key/value pairs where the key intervals overlap (intersect) the given interval.
 -- The elements are returned in ascending key order.
