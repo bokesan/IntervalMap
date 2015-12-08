@@ -104,6 +104,8 @@ module Data.IntervalSet (
 
             , split
             , splitMember
+            , splitAt
+            , splitAround
 
             -- * Subset
             , isSubsetOf, isProperSubsetOf
@@ -124,7 +126,7 @@ module Data.IntervalSet (
 
             ) where
 
-import Prelude hiding (null, lookup, map, filter, foldr, foldl)
+import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
 import Data.Bits (shiftR, (.&.))
 import Data.Monoid (Monoid(..))
 import qualified Data.Foldable as Foldable
@@ -702,6 +704,19 @@ splitMember x s = case span (< x) (toAscList s) of
                     (_, [])                     -> (s, False, empty)
                     (lt, ge@(y:gt)) | y == x    -> (fromDistinctAscList lt, True, fromDistinctAscList gt)
                                     | otherwise -> (fromDistinctAscList lt, False, fromDistinctAscList ge)
+
+-- | /O(n)/. Split around a point.
+splitAt :: (Interval i k) => k -> IntervalSet i -> (IntervalSet i, IntervalSet i, IntervalSet i)
+splitAt p s = (fromDistinctAscList [x | x <- toAscList s, p `above` x],
+               fromDistinctAscList [x | x <- toAscList s, p `inside` x],
+               fromDistinctAscList [x | x <- toAscList s, p `below` x])
+
+-- | /O(n)/. Split around an interval.
+splitAround :: (Interval i k) => i -> IntervalSet i -> (IntervalSet i, IntervalSet i, IntervalSet i)
+splitAround i s = (fromDistinctAscList [x | x <- toAscList s, x `before` i],
+                   fromDistinctAscList [x | x <- toAscList s, x `overlaps` i],
+                   fromDistinctAscList [x | x <- toAscList s, x `after` i])
+
 
 -- subsets
 

@@ -8,7 +8,7 @@ import System.Exit (exitSuccess, exitFailure)
 import Test.QuickCheck hiding (within)
 import Test.QuickCheck.Test (isSuccess)
 import Control.Monad (liftM)
-import Prelude hiding (null, map, filter, foldr, foldl)
+import Prelude hiding (null, map, filter, foldr, foldl, splitAt)
 import qualified Data.List as L
 
 import Data.IntervalSet
@@ -140,6 +140,22 @@ prop_splitMember (IS s) iv =      let (lo,m,hi) = splitMember iv s in
                                   all (< iv) (toList lo) &&
                                   all (> iv) (toList hi) &&
                                   union lo hi == if m then delete iv s else s
+
+prop_splitAt p (IS s) =           let (lo,c,hi) = splitAt p s in
+                                  valid lo && valid c && valid hi &&
+                                  all (p `above`) (toList lo) &&
+                                  all (p `inside`) (toList c) &&
+                                  all (p `below`) (toList hi) &&
+                                  unions [lo,c,hi] == s &&
+                                  size lo + size c + size hi == size s
+
+prop_splitAround i (IS s) =       let (lo,c,hi) = splitAround i s in
+                                  valid lo && valid c && valid hi &&
+                                  all (i `after`) (toList lo) &&
+                                  all (i `overlaps`) (toList c) &&
+                                  all (i `before`) (toList hi) &&
+                                  unions [lo,c,hi] == s &&
+                                  size lo + size c + size hi == size s
 
 prop_readShow (IS s) =            s == read (show s)
 
