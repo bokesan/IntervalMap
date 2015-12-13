@@ -144,19 +144,20 @@ prop_splitMember (IS s) iv =      let (lo,m,hi) = splitMember iv s in
                                   all (> iv) (toList hi) &&
                                   union lo hi == if m then delete iv s else s
 
-prop_splitAt p (IS s) =           let (lo,c,hi) = splitAt p s in
-                                  valid lo && valid c && valid hi &&
-                                  all (p `above`) (toList lo) &&
-                                  all (p `inside`) (toList c) &&
-                                  all (p `below`) (toList hi) &&
-                                  unions [lo,c,hi] == s &&
-                                  size lo + size c + size hi == size s
+prop_splitAt1 p (IS s) =          let (lo,_,_) = splitAt p s in
+                                  valid lo && lo == filter (p `above`) s
+
+prop_splitAt2 p (IS s) =          let (_,c,_) = splitAt p s in
+                                  valid c && c == filter (p `inside`) s
+
+prop_splitAt3 p (IS s) =          let (_,_,hi) = splitAt p s in
+                                  valid hi && hi == filter (p `below`) s
 
 prop_splitAround i (IS s) =       let (lo,c,hi) = splitAround i s in
                                   valid lo && valid c && valid hi &&
-                                  all (i `after`) (toList lo) &&
-                                  all (i `overlaps`) (toList c) &&
-                                  all (i `before`) (toList hi) &&
+                                  lo == filter (i `after`) s &&
+                                  c  == filter (i `overlaps`) s &&
+                                  hi == filter (i `before`) s &&
                                   unions [lo,c,hi] == s &&
                                   size lo + size c + size hi == size s
 
@@ -227,6 +228,10 @@ main = do
          check prop_partition "partition"
          check prop_split "split"
          check prop_splitMember "splitMember"
+         check prop_splitAt1 "splitAt lower"
+         check prop_splitAt2 "splitAt containing"
+         check prop_splitAt3 "splitAt higher"
+         check prop_splitAround "splitAround"
          check prop_containing "containing"
          check prop_intersecting "intersecting"
          check prop_within "within"

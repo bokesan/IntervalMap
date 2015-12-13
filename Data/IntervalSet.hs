@@ -263,42 +263,42 @@ notMember key tree = not (member key tree)
 -- /O(n)/, since potentially all intervals could contain the point.
 -- /O(log n)/ average case. This is also the worst case for sets containing no overlapping intervals.
 containing :: (Interval k e) => IntervalSet k -> e -> IntervalSet k
-t `containing` pt = fromDistinctAscList (go [] pt t)
+t `containing` p = p `seq` fromDistinctAscList (go [] t)
   where
-    go xs p Nil = p `seq` xs
-    go xs p (Node _ k m l r)
+    go xs Nil = xs
+    go xs (Node _ k m l r)
        | p `above` m  =  xs         -- above all intervals in the tree: no result
-       | p `below` k  =  go xs p l  -- to the left of the lower bound: can't be in right subtree
-       | p `inside` k =  go (k : go xs p r) p l
-       | otherwise    =  go (go xs p r) p l
+       | p `below` k  =  go xs l    -- to the left of the lower bound: can't be in right subtree
+       | p `inside` k =  go (k : go xs r) l
+       | otherwise    =  go (go xs r) l
 
 -- | Return the set of all intervals overlapping (intersecting) the given interval.
 --
 -- /O(n)/, since potentially all values could intersect the interval.
 -- /O(log n)/ average case, if few values intersect the interval.
 intersecting :: (Interval k e) => IntervalSet k -> k -> IntervalSet k
-t `intersecting` iv = fromDistinctAscList (go [] iv t)
+t `intersecting` i = i `seq` fromDistinctAscList (go [] t)
   where
-    go xs i Nil = i `seq` xs
-    go xs i (Node _ k m l r)
+    go xs Nil = xs
+    go xs (Node _ k m l r)
        | i `after` m     =  xs
-       | i `before` k    =  go xs i l
-       | i `overlaps` k  =  go (k : go xs i r) i l
-       | otherwise       =  go (go xs i r) i l
+       | i `before` k    =  go xs l
+       | i `overlaps` k  =  go (k : go xs r) l
+       | otherwise       =  go (go xs r) l
 
 -- | Return the set of all intervals which are completely inside the given interval.
 --
 -- /O(n)/, since potentially all values could be inside the interval.
 -- /O(log n)/ average case, if few keys are inside the interval.
 within :: (Interval k e) => IntervalSet k -> k -> IntervalSet k
-t `within` iv = fromDistinctAscList (go [] iv t)
+t `within` i = i `seq` fromDistinctAscList (go [] t)
   where
-    go xs i Nil = i `seq` xs
-    go xs i (Node _ k m l r)
+    go xs Nil = xs
+    go xs (Node _ k m l r)
        | i `after` m     =  xs
-       | i `before` k    =  go xs i l
-       | i `subsumes` k  =  go (k : go xs i r) i l
-       | otherwise       =  go (go xs i r) i l
+       | i `before` k    =  go xs l
+       | i `subsumes` k  =  go (k : go xs r) l
+       | otherwise       =  go (go xs r) l
 
 
 -- | /O(log n)/. Insert a new value. If the set already contains an element equal to the value,
@@ -576,6 +576,11 @@ ascListIntersection xs@(xk:xs') ys@(yk:ys') =
 toAscList :: IntervalSet k -> [k]
 toAscList m = foldr (\k r -> k : r) [] m
 
+toAscList' :: IntervalSet k -> [k] -> [k]
+toAscList' m xs = foldr (\k r -> k : r) xs m
+
+
+
 -- | /O(n)/. The list of all values in the set, in no particular order.
 toList :: IntervalSet k -> [k]
 toList s = go s []
@@ -705,16 +710,47 @@ splitMember x s = case span (< x) (toAscList s) of
                     (lt, ge@(y:gt)) | y == x    -> (fromDistinctAscList lt, True, fromDistinctAscList gt)
                                     | otherwise -> (fromDistinctAscList lt, False, fromDistinctAscList ge)
 
+-- Helper for building sets
+data Union k = UEmpty | Union !(Union k) !(Union k)
+             | UCons !k !(Union k)
+             | UAppend !(IntervalSet k) !(Union k)
+
+mkUnion :: Union a -> Union a -> Union a
+mkUnion UEmpty u = u
+mkUnion u UEmpty = u
+mkUnion u1 u2 = Union u1 u2
+
+fromUnion :: Interval k e => Union k -> IntervalSet k
+fromUnion UEmpty = empty
+fromUnion (UCons k UEmpty) = singleton k
+fromUnion (UAppend s UEmpty) = turnBlack s
+fromUnion u = fromDistinctAscList (unfold u [])
+  where
+    unfold UEmpty r = r
+    unfold (Union a b) r = unfold a (unfold b r)
+    unfold (UCons k u) r = k : unfold u r
+    unfold (UAppend s u) r = toAscList' s (unfold u r)
+
 -- | /O(n)/. Split around a point.
 splitAt :: (Interval i k) => k -> IntervalSet i -> (IntervalSet i, IntervalSet i, IntervalSet i)
-splitAt p s = (fromDistinctAscList [x | x <- toAscList s, p `above` x],
-               fromDistinctAscList [x | x <- toAscList s, p `inside` x],
-               fromDistinctAscList [x | x <- toAscList s, p `below` x])
+splitAt p s = (fromUnion (lower s), s `containing` p, fromUnion (higher s))
+  where
+    lower Nil = UEmpty
+    lower s@(Node _ k m l r)
+      | p `above`  m  =  UAppend s UEmpty
+      | p `below`  k  =  lower l
+      | p `inside` k  =  mkUnion (lower l) (lower r)
+      | otherwise     =  mkUnion (lower l) (UCons k (lower r))
+    higher Nil = UEmpty
+    higher (Node _ k m l r)
+      | p `above`  m  =  UEmpty
+      | p `below`  k  =  mkUnion (higher l) (UCons k (UAppend r UEmpty))
+      | otherwise     =  higher r
 
 -- | /O(n)/. Split around an interval.
 splitAround :: (Interval i k) => i -> IntervalSet i -> (IntervalSet i, IntervalSet i, IntervalSet i)
 splitAround i s = (fromDistinctAscList [x | x <- toAscList s, x `before` i],
-                   fromDistinctAscList [x | x <- toAscList s, x `overlaps` i],
+                   s `intersecting` i,
                    fromDistinctAscList [x | x <- toAscList s, x `after` i])
 
 
