@@ -75,6 +75,11 @@ main =
            bench "int"     $ nf L.fromAscList oIvsP,
            bench "node"    $ nf N.fromAscList oIvsP
          ],
+         bgroup "size" [
+           bench "reg"    $ nf S.size sMap,
+           bench "int"    $ nf L.size lMap,
+           bench "node"   $ nf N.size nMap
+         ],
          bgroup "lookup" [
            bench "reg"    $ nf (\m -> [S.lookup i m | i <- lookupKeys]) sMap,
            bench "int"    $ nf (\m -> [L.lookup i m | i <- lookupKeys]) lMap,
