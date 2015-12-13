@@ -85,15 +85,16 @@ prop_difference (IS s1) (IS s2) = (s1 \\ s2) == foldr delete s1 s2
                                       
 prop_intersection (IS s1) (IS s2) =
                                   let i = intersection s1 s2 in
+                                  valid i &&
                                   all (\e -> member e s1 && member e s2) (toList i)
                                       
 prop_minView (IS s) =             case minView s of
                                     Nothing -> null s
-                                    Just (min, s') -> all (min <) (toList s')
+                                    Just (min, s') -> valid s' && all (min <) (toList s')
                                   
 prop_maxView (IS s) =             case maxView s of
                                     Nothing -> null s
-                                    Just (max, s') -> all (max >) (toList s')
+                                    Just (max, s') -> valid s' && all (max >) (toList s')
                                     
 prop_findMin (IS s) =             case findMin s of
                                     Nothing  -> null s
@@ -109,11 +110,13 @@ prop_findLast (IS s) =            case findLast s of
                                       all (\e -> upperBound e < end || (upperBound e == end && e <= x)) (toList s)
                                                       
 prop_deleteMin (IS s) =           let s' = deleteMin s in
+                                  valid s' &&
                                   case findMin s of
                                     Nothing  -> null s'
                                     Just min -> s' == delete min s
 
 prop_deleteMax (IS s) =           let s' = deleteMax s in
+                                  valid s' &&
                                   case findMax s of
                                     Nothing  -> null s'
                                     Just max -> s' == delete max s
@@ -162,14 +165,17 @@ prop_readShow (IS s) =            s == read (show s)
 
 prop_containing :: IS -> Int -> Bool
 prop_containing (IS s) n =        let s' = s `containing` n in
+                                  valid s' &&
                                   all (\e -> if e `contains` n then e `member` s' else e `notMember` s') (toList s)
 
 prop_intersecting :: IS -> II -> Bool
 prop_intersecting (IS s) iv =     let s' = s `intersecting` iv in
+                                  valid s' &&
                                   all (\e -> if e `overlaps` iv then e `member` s' else e `notMember` s') (toList s)
                                       
 prop_within :: IS -> II -> Bool
 prop_within (IS s) iv =           let s' = s `within` iv in
+                                  valid s' &&
                                   all (\e -> if iv `subsumes` e then e `member` s' else e `notMember` s') (toList s)
                                   
 prop_foldr  (IS s) iv =           Just (foldr  (\v r -> min v r) iv s) == findMin (insert iv s)
