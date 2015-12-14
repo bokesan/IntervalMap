@@ -353,13 +353,13 @@ findLast :: (Interval k e) => IntervalSet k -> Maybe k
 findLast Nil = Nothing
 findLast t@(Node _ _ mx _ _) = go t
   where
-    go (Node _ k m l r) | sameU m mx = if sameU k m then go r `or` Just k
-                                                    else go r `or` go l
+    go (Node _ k m l r) | sameU m mx = if sameU k m then go r `orElse` Just k
+                                                    else go r `orElse` go l
                         | otherwise  = Nothing
     go Nil = Nothing
     sameU a b = upperBound a == upperBound b && rightClosed a == rightClosed b
-    Nothing `or` x = x
-    x       `or` _ = x
+    Nothing `orElse` x = x
+    x       `orElse` _ = x
 
 
 -- Type to indicate whether the number of black nodes changed or stayed the same.
@@ -721,19 +721,19 @@ mkUnion u UEmpty = u
 mkUnion u1 u2 = Union u1 u2
 
 fromUnion :: Interval k e => Union k -> IntervalSet k
-fromUnion UEmpty = empty
-fromUnion (UCons k UEmpty) = singleton k
-fromUnion (UAppend s UEmpty) = turnBlack s
-fromUnion u = fromDistinctAscList (unfold u [])
+fromUnion UEmpty               = empty
+fromUnion (UCons key UEmpty)   = singleton key
+fromUnion (UAppend set UEmpty) = turnBlack set
+fromUnion x                    = fromDistinctAscList (unfold x [])
   where
-    unfold UEmpty r = r
-    unfold (Union a b) r = unfold a (unfold b r)
-    unfold (UCons k u) r = k : unfold u r
+    unfold UEmpty        r = r
+    unfold (Union a b)   r = unfold a (unfold b r)
+    unfold (UCons k u)   r = k : unfold u r
     unfold (UAppend s u) r = toAscList' s (unfold u r)
 
 -- | /O(n)/. Split around a point.
 splitAt :: (Interval i k) => k -> IntervalSet i -> (IntervalSet i, IntervalSet i, IntervalSet i)
-splitAt p s = (fromUnion (lower s), s `containing` p, fromUnion (higher s))
+splitAt p set = (fromUnion (lower set), set `containing` p, fromUnion (higher set))
   where
     lower Nil = UEmpty
     lower s@(Node _ k m l r)
