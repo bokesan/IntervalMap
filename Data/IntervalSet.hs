@@ -105,7 +105,7 @@ module Data.IntervalSet (
             , split
             , splitMember
             , splitAt
-            , splitAround
+            , splitIntersecting
 
             -- * Subset
             , isSubsetOf, isProperSubsetOf
@@ -731,9 +731,10 @@ fromUnion x                    = fromDistinctAscList (unfold x [])
     unfold (UCons k u)   r = k : unfold u r
     unfold (UAppend s u) r = toAscList' s (unfold u r)
 
+
 -- | /O(n)/. Split around a point.
-splitAt :: (Interval i k) => k -> IntervalSet i -> (IntervalSet i, IntervalSet i, IntervalSet i)
-splitAt p set = (fromUnion (lower set), set `containing` p, fromUnion (higher set))
+splitAt :: (Interval i k, Ord i) => IntervalSet i -> k -> (IntervalSet i, IntervalSet i, IntervalSet i)
+splitAt set p = (fromUnion (lower set), set `containing` p, fromUnion (higher set))
   where
     lower Nil = UEmpty
     lower s@(Node _ k m l r)
@@ -748,10 +749,27 @@ splitAt p set = (fromUnion (lower set), set `containing` p, fromUnion (higher se
       | otherwise     =  higher r
 
 -- | /O(n)/. Split around an interval.
-splitAround :: (Interval i k) => i -> IntervalSet i -> (IntervalSet i, IntervalSet i, IntervalSet i)
-splitAround i s = (fromDistinctAscList [x | x <- toAscList s, x `before` i],
-                   s `intersecting` i,
-                   fromDistinctAscList [x | x <- toAscList s, x `after` i])
+splitIntersecting :: (Interval i k, Ord i) => IntervalSet i -> i -> (IntervalSet i, IntervalSet i, IntervalSet i)
+splitIntersecting set i = (fromUnion (lower set), set `intersecting` i, fromUnion (higher set))
+  where
+    lower Nil = UEmpty
+    lower s@(Node _ k m l r)
+      -- whole set lower: all
+      | i `after`  m   =  UAppend s UEmpty
+      -- interval before key: only from left subtree
+      | i <= k         =  lower l
+      -- interval intersects key to the right: both subtrees could contain lower intervals
+      | i `overlaps` k =  mkUnion (lower l) (lower r)
+      -- interval to the right of the key: key and both subtrees
+      | otherwise      =  mkUnion (lower l) (UCons k (lower r))
+    higher Nil = UEmpty
+    higher (Node _ k m l r)
+      -- whole set lower: nothing
+      | i `after` m    =  UEmpty
+      -- interval before key: node and complete right subtree + maybe part of the left subtree
+      | i `before`  k  =  mkUnion (higher l) (UCons k (UAppend r UEmpty))
+      -- interval overlaps or to the right of key: only from right subtree
+      | otherwise      =  higher r
 
 
 -- subsets
