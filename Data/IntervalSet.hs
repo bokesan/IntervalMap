@@ -146,6 +146,7 @@ infixl 9 \\ --
 m1 \\ m2 = difference m1 m2
 
 
+-- | The Color of a tree node.
 data Color = R | B deriving (Eq)
 
 -- | A set of intervals of type @k@.
@@ -331,13 +332,13 @@ balanceR c xk l r = mNode c xk l r
 
 -- min/max
 
--- | /O(log n)/. Returns the least interval in the set.
+-- | /O(log n)/. Returns the minimal value in the set.
 findMin :: IntervalSet k -> Maybe k
 findMin (Node _ k _ Nil _) = Just k
 findMin (Node _ _ _ l _) = findMin l
 findMin Nil = Nothing
 
--- | /O(log n)/. Returns the largest interval in the set.
+-- | /O(log n)/. Returns the maximal value in the set.
 findMax :: IntervalSet k -> Maybe k
 findMax (Node _ k _ _ Nil) = Just k
 findMax (Node _ _ _ _ r) = findMax r
@@ -710,7 +711,7 @@ splitMember x s = case span (< x) (toAscList s) of
                     (lt, ge@(y:gt)) | y == x    -> (fromDistinctAscList lt, True, fromDistinctAscList gt)
                                     | otherwise -> (fromDistinctAscList lt, False, fromDistinctAscList ge)
 
--- Helper for building sets
+-- Helper for building sets from distinct ascending values and subsets
 data Union k = UEmpty | Union !(Union k) !(Union k)
              | UCons !k !(Union k)
              | UAppend !(IntervalSet k) !(Union k)
@@ -733,6 +734,8 @@ fromUnion x                    = fromDistinctAscList (unfold x [])
 
 
 -- | /O(n)/. Split around a point.
+-- Splits the set into three subsets: intervals below the point,
+-- intervals containing the point, and intervals above the point.
 splitAt :: (Interval i k, Ord i) => IntervalSet i -> k -> (IntervalSet i, IntervalSet i, IntervalSet i)
 splitAt set p = (fromUnion (lower set), set `containing` p, fromUnion (higher set))
   where
@@ -749,6 +752,9 @@ splitAt set p = (fromUnion (lower set), set `containing` p, fromUnion (higher se
       | otherwise     =  higher r
 
 -- | /O(n)/. Split around an interval.
+-- Splits the set into three subsets: intervals below the given interval,
+-- intervals intersecting the given interval, and intervals above the
+-- given interval.
 splitIntersecting :: (Interval i k, Ord i) => IntervalSet i -> i -> (IntervalSet i, IntervalSet i, IntervalSet i)
 splitIntersecting set i = (fromUnion (lower set), set `intersecting` i, fromUnion (higher set))
   where
