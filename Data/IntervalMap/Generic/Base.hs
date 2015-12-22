@@ -1190,7 +1190,15 @@ isProperSubmapOf m1 m2 = isProperSubmapOfBy (==) m1 m2
  applied to their respective values.
 -}
 isProperSubmapOfBy :: Ord k => (a -> b -> Bool) -> IntervalMap k a -> IntervalMap k b -> Bool
-isProperSubmapOfBy f t1 t2 = size t1 < size t2 && isSubmapOfBy f t1 t2
+isProperSubmapOfBy f m1 m2 = go (toAscList m1) (toAscList m2)
+  where
+    go [] (_:_)  =  True
+    go _  []     =  False
+    go s1@((k1,v1):r1) ((k2,v2):r2) =
+       case compare k1 k2 of
+         GT -> go s1 r2
+         EQ -> f v1 v2 && go r1 r2
+         LT -> False
 
 
 -- debugging

@@ -387,6 +387,12 @@ prop_submap (IMI m1) (IMI m2)
   | otherwise            = M.size m1 > M.size m2
                            || any (==True) [k `M.notMember` m2 || m1 M.! k /= m2 M.! k | k <- M.keys m1]
 
+prop_properSubmap (IMI m1) (IMI m2)
+  | m1 `M.isProperSubmapOf` m2 = M.size m1 < M.size m2
+                                 && all (==True) [k `M.member` m2 && m1 M.! k == m2 M.! k | k <- M.keys m1]
+  | otherwise                  = M.size m1 >= M.size m2
+                                 || any (==True) [k `M.notMember` m2 || m1 M.! k /= m2 M.! k | k <- M.keys m1]
+
 
 -- filter
 
@@ -475,6 +481,7 @@ main = do
           check prop_splitLookup "splitLookup"
           check prop_mapKeysWith "mapKeysWith"
           check prop_submap "submap"
+          check prop_properSubmap "proper submap"
           check prop_readShow "read/show"
           putStrLn ("deep100L: " ++ show (M.showStats deep100L))
           putStrLn ("deep100R: " ++ show (M.showStats deep100R))
