@@ -774,9 +774,10 @@ splitIntersecting set i = (fromUnion (lower set), set `intersecting` i, fromUnio
 
 -- subsets
 
--- | /O(n+m)/.
+-- | /O(n+m)/. Is the first set a subset of the second set?
+-- This is always true for equal sets.
 isSubsetOf :: (Ord k) => IntervalSet k -> IntervalSet k -> Bool
-isSubsetOf m1 m2 = go (toAscList m1) (toAscList m2)
+isSubsetOf set1 set2 = go (toAscList set1) (toAscList set2)
   where
     go []    _  =  True
     go (_:_) [] =  False
@@ -786,12 +787,20 @@ isSubsetOf m1 m2 = go (toAscList m1) (toAscList m2)
          EQ -> go r1 r2
          LT -> False
 
--- | /O(n+m)/. Is this a proper subset? (ie. a subset but not equal). 
+-- | /O(n+m)/. Is the first set a proper subset of the second set?
+-- (i.e. a subset but not equal).
 isProperSubsetOf :: (Ord k) => IntervalSet k -> IntervalSet k -> Bool
-isProperSubsetOf m1 m2 = size m1 < size m2 && isSubsetOf m1 m2
+isProperSubsetOf set1 set2 = go (toAscList set1) (toAscList set2)
+  where
+    go [] (_:_) = True
+    go _  []    = False
+    go s1@(k1:r1) (k2:r2) =
+       case compare k1 k2 of
+         GT -> go s1 r2
+         EQ -> go r1 r2
+         LT -> False
 
 -- debugging
-
 
 -- | The height of the tree. For testing/debugging only.
 height :: IntervalSet k -> Int
