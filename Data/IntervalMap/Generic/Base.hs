@@ -1168,15 +1168,16 @@ isSubmapOf m1 m2 = isSubmapOfBy (==) m1 m2
  applied to their respective values.
 -}
 isSubmapOfBy :: Ord k => (a -> b -> Bool) -> IntervalMap k a -> IntervalMap k b -> Bool
-isSubmapOfBy f m1 m2 = go (toAscList m1) (toAscList m2)
-  where
-    go []    _  =  True
-    go (_:_) [] =  False
-    go s1@((k1,v1):r1) ((k2,v2):r2) =
-       case compare k1 k2 of
-         GT -> go s1 r2
-         EQ -> f v1 v2 && go r1 r2
-         LT -> False
+isSubmapOfBy f m1 m2 = ascListSubset f (toAscList m1) (toAscList m2)
+
+ascListSubset :: Ord k => (a -> b -> Bool) -> [(k,a)] -> [(k,b)] -> Bool
+ascListSubset f []    _  =  True
+ascListSubset f (_:_) [] =  False
+ascListSubset f s1@((k1,v1):r1) ((k2,v2):r2) =
+  case compare k1 k2 of
+    GT -> ascListSubset f s1 r2
+    EQ -> f v1 v2 && ascListSubset f r1 r2
+    LT -> False
 
 -- | /O(n+m)/. Is this a proper submap? (ie. a submap but not equal). 
 -- Defined as (@'isProperSubmapOf' = 'isProperSubmapOfBy' (==)@).
@@ -1196,7 +1197,7 @@ isProperSubmapOfBy f m1 m2 = go (toAscList m1) (toAscList m2)
     go _  []     =  False
     go s1@((k1,v1):r1) ((k2,v2):r2) =
        case compare k1 k2 of
-         GT -> go s1 r2
+         GT -> ascListSubset f s1 r2
          EQ -> f v1 v2 && go r1 r2
          LT -> False
 

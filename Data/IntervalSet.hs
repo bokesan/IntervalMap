@@ -783,15 +783,16 @@ splitIntersecting set i = (fromUnion (lower set), set `intersecting` i, fromUnio
 -- | /O(n+m)/. Is the first set a subset of the second set?
 -- This is always true for equal sets.
 isSubsetOf :: (Ord k) => IntervalSet k -> IntervalSet k -> Bool
-isSubsetOf set1 set2 = go (toAscList set1) (toAscList set2)
-  where
-    go []    _  =  True
-    go (_:_) [] =  False
-    go s1@(k1:r1) (k2:r2) =
-       case compare k1 k2 of
-         GT -> go s1 r2
-         EQ -> go r1 r2
-         LT -> False
+isSubsetOf set1 set2 = ascListSubset (toAscList set1) (toAscList set2)
+
+ascListSubset :: (Ord a) => [a] -> [a] -> Bool
+ascListSubset []    _  =  True
+ascListSubset (_:_) [] =  False
+ascListSubset s1@(k1:r1) (k2:r2) =
+  case compare k1 k2 of
+    GT -> ascListSubset s1 r2
+    EQ -> ascListSubset r1 r2
+    LT -> False
 
 -- | /O(n+m)/. Is the first set a proper subset of the second set?
 -- (i.e. a subset but not equal).
@@ -802,7 +803,7 @@ isProperSubsetOf set1 set2 = go (toAscList set1) (toAscList set2)
     go _  []    = False
     go s1@(k1:r1) (k2:r2) =
        case compare k1 k2 of
-         GT -> go s1 r2
+         GT -> ascListSubset s1 r2
          EQ -> go r1 r2
          LT -> False
 
