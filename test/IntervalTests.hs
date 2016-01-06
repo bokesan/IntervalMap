@@ -5,6 +5,8 @@ import System.Exit (exitSuccess, exitFailure)
 import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
 import Control.Monad (liftM)
+import Data.List (maximumBy)
+import Data.Either (isRight)
 
 import Data.IntervalMap.Interval
 
@@ -113,6 +115,34 @@ prop_compare1 (II i1) (II i2) =
     GT -> compare i1 i2 == GT
     EQ -> True
 
+prop_compare_openness_closedness_lower_bound (II i1) (II i2) =
+  if lowerBound i1 == lowerBound i2 then
+    let smaller = minimum [i1, i2]
+        leftOpen = not . leftClosed
+    in leftClosed smaller || (leftOpen i1 && leftOpen i2)
+  else
+    lowerBound i1 /= lowerBound i2
+
+prop_compare_openness_closedness_upper_bound (II i1) (II i2) =
+  if upperBound i1 == upperBound i2 then
+    let bigger = maximumBy compareByUpper [i1, i2]
+        rightOpen = not. rightClosed
+    in rightClosed bigger || (rightOpen i1 && rightOpen i2)
+  else
+    upperBound i1 /= upperBound i2
+
+prop_combine_closedness =
+  let eitherTest = either (const False)
+  in eitherTest (c15 ==) (combine co15 oc15) &&
+     eitherTest (c15 ==) (combine c15 o15) &&
+     eitherTest (o15 ==) (combine o15 o15) &&
+     eitherTest (co15 ==) (combine co15 o15) &&
+     eitherTest (oc15 ==) (combine oc15 o15)
+
+prop_combine_reflexive (II i) =
+  let eitherTest = either (const False)
+  in eitherTest (i ==) (combine i i)
+
 prop_contains (II i) p =
   if p `inside` i then
     lowerBound i <= p && upperBound i >= p
@@ -144,11 +174,15 @@ main = do
 	 check prop_rightClosed "rightClosed"
          check prop_ord "ord"
 	 check prop_compare1 "compare1"
+	 check prop_compare_openness_closedness_lower_bound "compare_openness_closedness_lower_bound"
+	 check prop_compare_openness_closedness_upper_bound "compare_openness_closedness_upper_bound"
 	 check prop_contains1 "contains1"
 	 check prop_overlaps "overlaps"
 	 check prop_subsumes1 "subsumes1"
 	 check prop_not_empty "not empty"
 	 check prop_overlaps_symmetric "overlaps symmetric"
+	 check prop_combine_closedness "combine_closedness"
+	 check prop_combine_reflexive "combine_reflexive"
 	 check prop_contains "contains"
 	 check prop_subsumes "subsumes"
 	 check prop_equals "equals"
