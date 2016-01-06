@@ -6,7 +6,6 @@ import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
 import Control.Monad (liftM)
 import Data.List (maximumBy)
-import Data.Either (isRight)
 
 import Data.IntervalMap.Interval
 
