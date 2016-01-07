@@ -22,12 +22,13 @@ module Data.IntervalMap.Interval (
     lowerBound, upperBound, leftClosed, rightClosed, isEmpty,
     -- * Interval operations
     overlaps, subsumes, before, after,
-    compareByUpper,
+    compareByUpper, combine,
     -- * Point operations
     below, inside, above
   ) where
 
 import Control.DeepSeq (NFData(rnf))
+import Data.List (maximumBy)
 
 -- | Intervals with endpoints of type @a@.
 --
@@ -257,3 +258,22 @@ p `above` (IntervalCO     _ u)  =  p >= u
 p `above` (ClosedInterval _ u)  =  p >  u
 p `above` (OpenInterval   _ u)  =  p >= u
 p `above` (IntervalOC     _ u)  =  p >  u
+
+-- | If the intervals overlap combine them into one.
+combine :: (Ord a) => Interval a -> Interval a -> Either (Interval a, Interval a) (Interval a)
+combine a b =
+  if a `overlaps` b
+    then let lowerBoundInterval = minimum [a, b]
+             upperBoundInterval = maximumBy compareByUpper [a, b]
+             newLowerBound = lowerBound lowerBoundInterval
+             newUpperBound = upperBound upperBoundInterval
+             interval =
+               if leftClosed lowerBoundInterval
+                 then if rightClosed upperBoundInterval
+                        then ClosedInterval newLowerBound newUpperBound
+                        else IntervalCO     newLowerBound newUpperBound
+                 else if rightClosed upperBoundInterval
+                        then IntervalOC     newLowerBound newUpperBound
+                        else OpenInterval   newLowerBound newUpperBound
+         in Right interval
+    else Left (a, b)
