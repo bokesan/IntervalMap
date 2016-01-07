@@ -131,16 +131,16 @@ prop_compare_openness_closedness_upper_bound (II i1) (II i2) =
     upperBound i1 /= upperBound i2
 
 prop_combine_closedness =
-  let eitherTest = either (const False)
-  in eitherTest (c15 ==) (combine co15 oc15) &&
-     eitherTest (c15 ==) (combine c15 o15) &&
-     eitherTest (o15 ==) (combine o15 o15) &&
-     eitherTest (co15 ==) (combine co15 o15) &&
-     eitherTest (oc15 ==) (combine oc15 o15)
+  let maybeTest = maybe False
+  in maybeTest (c15 ==) (combine co15 oc15) &&
+     maybeTest (c15 ==) (combine c15 o15) &&
+     maybeTest (o15 ==) (combine o15 o15) &&
+     maybeTest (co15 ==) (combine co15 o15) &&
+     maybeTest (oc15 ==) (combine oc15 o15)
 
 prop_combine_reflexive (II i) =
-  let eitherTest = either (const False)
-  in eitherTest (i ==) (combine i i)
+  let maybeTest = maybe False
+  in maybeTest (i ==) (combine i i)
 
 prop_contains (II i) p =
   if p `inside` i then
