@@ -1171,8 +1171,8 @@ isSubmapOfBy :: Ord k => (a -> b -> Bool) -> IntervalMap k a -> IntervalMap k b 
 isSubmapOfBy f m1 m2 = ascListSubset f (toAscList m1) (toAscList m2)
 
 ascListSubset :: Ord k => (a -> b -> Bool) -> [(k,a)] -> [(k,b)] -> Bool
-ascListSubset f []    _  =  True
-ascListSubset f (_:_) [] =  False
+ascListSubset _ []    _  =  True
+ascListSubset _ (_:_) [] =  False
 ascListSubset f s1@((k1,v1):r1) ((k2,v2):r2) =
   case compare k1 k2 of
     GT -> ascListSubset f s1 r2
