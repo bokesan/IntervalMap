@@ -84,6 +84,7 @@ module Data.IntervalSet (
             -- ** Fold
             , foldr, foldl
             , foldl', foldr'
+            , flattenWith, flattenWithMonotonic
 
             -- * Conversion
             , elems
@@ -806,6 +807,23 @@ isProperSubsetOf set1 set2 = go (toAscList set1) (toAscList set2)
          GT -> ascListSubset s1 r2
          EQ -> go r1 r2
          LT -> False
+
+flattenWith :: (Ord a, Interval a e) => (a -> a -> Maybe a) -> IntervalSet a -> IntervalSet a
+flattenWith combine set = fromList (combineSuccessive combine set)
+
+flattenWithMonotonic :: (Interval a e) => (a -> a -> Maybe a) -> IntervalSet a -> IntervalSet a
+flattenWithMonotonic combine set = fromDistinctAscList (combineSuccessive combine set)
+
+combineSuccessive :: (a -> a -> Maybe a) -> IntervalSet a -> [a]
+combineSuccessive combine set = go (toAscList set)
+  where
+    go (x : xs@(_:_)) = go1 x xs
+    go xs             = xs
+    go1 x (y:ys) = case combine x y of
+                     Nothing -> x : go1 y ys
+                     Just x' -> go1 x' ys
+    go1 x []     = [x]
+
 
 -- debugging
 

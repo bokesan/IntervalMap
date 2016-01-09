@@ -26,6 +26,10 @@ instance Interval II Int where
    lowerBound (II a _) = a
    upperBound (II _ b) = b
 
+combine :: II -> II -> Maybe II
+combine i1@(II a b) i2@(II c d) | i1 `overlaps` i2 = Just (II (min a c) (max b d))
+                                | otherwise = Nothing
+
 instance Arbitrary II where
   arbitrary = do x <- arbitrary
                  iv <- interval (abs x)
@@ -184,6 +188,22 @@ prop_foldr' (IS s) iv =           Just (foldr' (\v r -> min v r) iv s) == findMi
 prop_foldl  (IS s) iv =           Just (foldl  (\r v -> min v r) iv s) == findMin (insert iv s)
 prop_foldl' (IS s) iv =           Just (foldl' (\r v -> min v r) iv s) == findMin (insert iv s)
 
+prop_flattenWithMonotonic (IS s) = let s' = flattenWithMonotonic combine s in
+                                   valid s' &&
+                                   size s' <= size s &&
+                                   nonOverlapping (toAscList s') &&
+                                   (null s || (let Just a = findMin s
+                                                   Just b = findMin s'
+                                                   Just c = findLast s
+                                                   Just d = findLast s'
+                                               in lowerBound a == lowerBound b &&
+                                                  upperBound c == upperBound d))
+
+nonOverlapping :: (Interval i e) => [i] -> Bool
+nonOverlapping (x:y:xs) | x `overlaps` y = False
+                        | otherwise      = nonOverlapping (y:xs)
+nonOverlapping _ = True
+
 check p name = do putStrLn ("Testing " ++ name ++ ":")
                   r <- quickCheckWithResult (stdArgs { maxSuccess = 500 }) p
                   if isSuccess r
@@ -235,5 +255,6 @@ main = do
          check prop_containing "containing"
          check prop_intersecting "intersecting"
          check prop_within "within"
+         check prop_flattenWithMonotonic "flattenWithMonotonic"
          check prop_readShow "read/show"
          exitSuccess
