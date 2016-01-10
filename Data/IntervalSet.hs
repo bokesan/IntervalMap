@@ -808,9 +808,13 @@ isProperSubsetOf set1 set2 = go (toAscList set1) (toAscList set2)
          EQ -> go r1 r2
          LT -> False
 
+-- | /O(n log n)/. Build a new set by combining successive values.
 flattenWith :: (Ord a, Interval a e) => (a -> a -> Maybe a) -> IntervalSet a -> IntervalSet a
 flattenWith combine set = fromList (combineSuccessive combine set)
 
+-- | /O(n)/. Build a new set by combining successive values.
+-- Same as 'flattenWith', but works only when the combining functions returns
+-- strictly monotonic values.
 flattenWithMonotonic :: (Interval a e) => (a -> a -> Maybe a) -> IntervalSet a -> IntervalSet a
 flattenWithMonotonic combine set = fromDistinctAscList (combineSuccessive combine set)
 
