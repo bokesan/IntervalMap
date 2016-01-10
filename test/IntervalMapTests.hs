@@ -416,6 +416,16 @@ prop_splitLookup (IMI m) (II x) = M.valid l && M.valid r
 
 prop_readShow (IMI m) = m == read (show m)
 
+prop_flatten (IMI m) = let m' = M.flattenWith (+) m in
+                       M.valid m' &&
+                       sum (M.elems m) == sum (M.elems m') &&
+                       nonOverlapping (M.keys m')
+
+nonOverlapping :: [Interval Int] -> Bool
+nonOverlapping (x:y:xs) | x `overlaps` y = False
+                        | otherwise      = nonOverlapping (y:xs)
+nonOverlapping _ = True
+
 
 checkElems :: Int -> Int -> [(Interval Int, Int)] -> Bool
 checkElems n len lyst = h n (n + len) lyst
@@ -482,6 +492,7 @@ main = do
           check prop_mapKeysWith "mapKeysWith"
           check prop_submap "submap"
           check prop_properSubmap "proper submap"
+          check prop_flatten "flattenWith"
           check prop_readShow "read/show"
           putStrLn ("deep100L: " ++ show (M.showStats deep100L))
           putStrLn ("deep100R: " ++ show (M.showStats deep100R))

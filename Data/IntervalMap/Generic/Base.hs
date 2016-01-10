@@ -120,6 +120,7 @@ module Data.IntervalMap.Generic.Base (
             , foldrWithKey, foldlWithKey
             , foldl', foldr'
             , foldrWithKey', foldlWithKey'
+            , flattenWith, flattenWithMonotonic
 
             -- * Conversion
             , elems
@@ -724,6 +725,25 @@ foldlWithKey' :: (a -> k -> v -> a) -> a -> IntervalMap k v -> a
 foldlWithKey' f z m = z `seq` case m of
                                 Nil -> z
                                 Node _ k _ x l r -> foldlWithKey' f (f (foldlWithKey' f z l) k x) r
+
+-- | /O(n log n)/. Build a new map by combining successive key/value pairs.
+flattenWith :: (Ord k, Interval k e) => ((k,v) -> (k,v) -> Maybe (k,v)) -> IntervalMap k v -> IntervalMap k v
+flattenWith combine m = fromList (combineSuccessive combine m)
+
+-- | /O(n)/. Build a new map by combining successive key/value pairs.
+-- Same as 'flattenWith', but works only when the combining functions returns
+-- strictly monotonic key values.
+flattenWithMonotonic :: (Interval k e) => ((k,v) -> (k,v) -> Maybe (k,v)) -> IntervalMap k v -> IntervalMap k v
+flattenWithMonotonic combine m = fromDistinctAscList (combineSuccessive combine m)
+
+combineSuccessive :: ((k,v) -> (k,v) -> Maybe (k,v)) -> IntervalMap k v -> [(k,v)]
+combineSuccessive combine m = go (toAscList m)
+  where
+    go (x : xs@(y:ys)) = case combine x y of
+                           Nothing -> x : go xs
+                           Just x' -> go (x' : ys)
+    go xs = xs
+
 
 -- delete
 

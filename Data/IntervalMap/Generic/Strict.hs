@@ -123,6 +123,7 @@ module Data.IntervalMap.Generic.Strict (
             -- ** Fold
             , foldr, foldl
             , foldrWithKey, foldlWithKey
+            , flattenWith, flattenWithMonotonic
 
             -- * Conversion
             , elems

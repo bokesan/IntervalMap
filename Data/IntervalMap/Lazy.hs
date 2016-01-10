@@ -88,6 +88,7 @@ module Data.IntervalMap.Lazy (
             -- ** Fold
             , M.foldr, M.foldl
             , foldrWithKey, foldlWithKey
+            , Data.IntervalMap.Lazy.flattenWith
 
             -- * Conversion
             , elems
@@ -158,3 +159,11 @@ import qualified Data.IntervalMap.Generic.Lazy as M
 
 
 type IntervalMap k v = M.IntervalMap (I.Interval k) v
+
+-- | /O(n)/. The list of all key\/value pairs contained in the map, in descending order of keys.
+flattenWith :: (Ord k) => (v -> v -> v) -> IntervalMap k v -> IntervalMap k v
+flattenWith f m = M.flattenWithMonotonic f' m
+  where
+    f' (k1,v1) (k2,v2) = case combine k1 k2 of
+                           Nothing -> Nothing
+                           Just k' -> Just (k', f v1 v2)
