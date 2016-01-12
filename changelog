@@ -1,3 +1,7 @@
+0.x.x.0  Change return type of containing, ... to a map.
+         Add splitAt, splitIntersecting, flatten... functions.
+         Minor performance tweaks.
+
 0.4.1.1  Fix bug in benchmark.
 
 0.4.1.0  Add IntervalSet.
