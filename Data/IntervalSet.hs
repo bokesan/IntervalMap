@@ -84,6 +84,8 @@ module Data.IntervalSet (
             -- ** Fold
             , foldr, foldl
             , foldl', foldr'
+
+            -- * Flatten
             , flattenWith, flattenWithMonotonic
 
             -- * Conversion
@@ -261,6 +263,9 @@ notMember :: (Ord k) => k -> IntervalSet k -> Bool
 notMember key tree = not (member key tree)
 
 -- | Return the set of all intervals containing the given point.
+-- This is the second element of the value of 'splitAt':
+--
+-- > set `containing` p == let (_,s,_) = set `splitAt` p in s
 --
 -- /O(n)/, since potentially all intervals could contain the point.
 -- /O(log n)/ average case. This is also the worst case for sets containing no overlapping intervals.
@@ -275,6 +280,9 @@ t `containing` p = p `seq` fromDistinctAscList (go [] t)
        | otherwise    =  go (go xs r) l
 
 -- | Return the set of all intervals overlapping (intersecting) the given interval.
+-- This is the second element of the result of 'splitIntersecting':
+--
+-- > set `intersecting` i == let (_,s,_) = set `splitIntersecting` i in s
 --
 -- /O(n)/, since potentially all values could intersect the interval.
 -- /O(log n)/ average case, if few values intersect the interval.

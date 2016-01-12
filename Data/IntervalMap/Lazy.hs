@@ -88,6 +88,8 @@ module Data.IntervalMap.Lazy (
             -- ** Fold
             , M.foldr, M.foldl
             , foldrWithKey, foldlWithKey
+
+            -- * Flatten
             , Data.IntervalMap.Lazy.flattenWith
 
             -- * Conversion

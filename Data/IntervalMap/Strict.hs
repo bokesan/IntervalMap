@@ -132,6 +132,8 @@ module Data.IntervalMap.Strict (
             -- ** Fold
             , foldr, foldl
             , foldrWithKey, foldlWithKey
+
+            -- * Flatten
             , Data.IntervalMap.Strict.flattenWith
 
             -- * Conversion

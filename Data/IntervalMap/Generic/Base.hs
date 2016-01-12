@@ -120,6 +120,8 @@ module Data.IntervalMap.Generic.Base (
             , foldrWithKey, foldlWithKey
             , foldl', foldr'
             , foldrWithKey', foldlWithKey'
+
+            -- * Flatten
             , flattenWith, flattenWithMonotonic
 
             -- * Conversion
