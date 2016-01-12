@@ -157,6 +157,8 @@ module Data.IntervalMap.Generic.Base (
 
             , split
             , splitLookup
+            , splitAt
+            , splitIntersecting
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy
@@ -193,7 +195,7 @@ module Data.IntervalMap.Generic.Base (
 
             ) where
 
-import Prelude hiding (null, lookup, map, filter, foldr, foldl)
+import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
 import Data.Bits (shiftR, (.&.))
 import Data.Monoid (Monoid(..))
 import Control.Applicative (Applicative(..), (<$>))
@@ -377,45 +379,48 @@ findWithDefault def k m = case lookup k m of
     Nothing -> def
     Just x  -> x
 
--- | Return all key/value pairs where the key intervals contain the given point.
--- The elements are returned in ascending key order.
+-- | Return the submap of key intervals containing the given point.
+-- This is the second element of the value of 'splitAt':
+--
+-- > m `containing` p == let (_,m',_) = m `splitAt` p in m'
 --
 -- /O(n)/, since potentially all keys could contain the point.
 -- /O(log n)/ average case. This is also the worst case for maps containing no overlapping keys.
-containing :: (Interval k e) => IntervalMap k v -> e -> [(k, v)]
-t `containing` pt = go [] pt t
+containing :: (Interval k e) => IntervalMap k v -> e -> IntervalMap k v
+t `containing` pt = pt `seq` fromDistinctAscList (go [] pt t)
   where
-    go xs p Nil = p `seq` xs
+    go xs _ Nil = xs
     go xs p (Node _ k m v l r)
        | p `above` m  =  xs         -- above all intervals in the tree: no result
        | p `below` k  =  go xs p l  -- to the left of the lower bound: can't be in right subtree
        | p `inside` k =  go ((k,v) : go xs p r) p l
        | otherwise    =  go (go xs p r) p l
 
--- | Return all key/value pairs where the key intervals overlap (intersect) the given interval.
--- The elements are returned in ascending key order.
+-- | Return the submap of key intervals overlapping (intersecting) the given interval.
+-- This is the second element of the value of 'splitIntersecting':
+--
+-- > m `intersecting` i == let (_,m',_) = m `splitIntersecting` i in m'
 --
 -- /O(n)/, since potentially all keys could intersect the interval.
 -- /O(log n)/ average case, if few keys intersect the interval.
-intersecting :: (Interval k e) => IntervalMap k v -> k -> [(k, v)]
-t `intersecting` iv = go [] iv t
+intersecting :: (Interval k e) => IntervalMap k v -> k -> IntervalMap k v
+t `intersecting` iv = iv `seq` fromDistinctAscList (go [] iv t)
   where
-    go xs i Nil = i `seq` xs
+    go xs _ Nil = xs
     go xs i (Node _ k m v l r)
        | i `after` m     =  xs
        | i `before` k    =  go xs i l
        | i `overlaps` k  =  go ((k,v) : go xs i r) i l
        | otherwise       =  go (go xs i r) i l
 
--- | Return all key/value pairs where the key intervals are completely inside the given interval.
--- The elements are returned in ascending key order.
+-- | Return the submap of key intervals completely inside the given interval.
 --
 -- /O(n)/, since potentially all keys could be inside the interval.
 -- /O(log n)/ average case, if few keys are inside the interval.
-within :: (Interval k e) => IntervalMap k v -> k -> [(k, v)]
-t `within` iv = go [] iv t
+within :: (Interval k e) => IntervalMap k v -> k -> IntervalMap k v
+t `within` iv = iv `seq` fromDistinctAscList (go [] iv t)
   where
-    go xs i Nil = i `seq` xs
+    go xs _ Nil = xs
     go xs i (Node _ k m v l r)
        | i `after` m     =  xs
        | i `before` k    =  go xs i l
@@ -929,6 +934,9 @@ ascListIntersection f xs@((xk,xv):xs') ys@((yk,yv):ys') =
 toAscList :: IntervalMap k v -> [(k,v)]
 toAscList m = foldrWithKey (\k v r -> (k,v) : r) [] m
 
+toAscList' :: IntervalMap k v -> [(k,v)] -> [(k,v)]
+toAscList' m xs = foldrWithKey (\k v r -> (k,v) : r) xs m
+
 -- | /O(n)/. The list of all key\/value pairs contained in the map, in no particular order.
 toList :: IntervalMap k v -> [(k,v)]
 toList m = toAscList m
@@ -1177,6 +1185,74 @@ splitLookup x m = case span (\(k,_) -> k < x) (toAscList m) of
                     (_, [])                         -> (m, Nothing, empty)
                     (lt, ge@((k,v):gt)) | k == x    -> (fromDistinctAscList lt, Just v, fromDistinctAscList gt)
                                         | otherwise -> (fromDistinctAscList lt, Nothing, fromDistinctAscList ge)
+
+
+-- | /O(n)/. Split around a point.
+-- Splits the map into three submaps: intervals below the point,
+-- intervals containing the point, and intervals above the point.
+splitAt :: (Interval i k, Ord i) => IntervalMap i a -> k -> (IntervalMap i a, IntervalMap i a, IntervalMap i a)
+splitAt mp p = (fromUnion (lower mp), mp `containing` p, fromUnion (higher mp))
+  where
+    lower Nil = UEmpty
+    lower s@(Node _ k m v l r)
+      | p `above`  m  =  UAppend s UEmpty
+      | p `below`  k  =  lower l
+      | p `inside` k  =  mkUnion (lower l) (lower r)
+      | otherwise     =  mkUnion (lower l) (UCons k v (lower r))
+    higher Nil = UEmpty
+    higher (Node _ k m v l r)
+      | p `above`  m  =  UEmpty
+      | p `below`  k  =  mkUnion (higher l) (UCons k v (UAppend r UEmpty))
+      | otherwise     =  higher r
+
+-- | /O(n)/. Split around an interval.
+-- Splits the set into three subsets: intervals below the given interval,
+-- intervals intersecting the given interval, and intervals above the
+-- given interval.
+splitIntersecting :: (Interval i k, Ord i) => IntervalMap i a -> i -> (IntervalMap i a, IntervalMap i a, IntervalMap i a)
+splitIntersecting mp i = (fromUnion (lower mp), mp `intersecting` i, fromUnion (higher mp))
+  where
+    lower Nil = UEmpty
+    lower s@(Node _ k m v l r)
+      -- whole set lower: all
+      | i `after`  m   =  UAppend s UEmpty
+      -- interval before key: only from left subtree
+      | i <= k         =  lower l
+      -- interval intersects key to the right: both subtrees could contain lower intervals
+      | i `overlaps` k =  mkUnion (lower l) (lower r)
+      -- interval to the right of the key: key and both subtrees
+      | otherwise      =  mkUnion (lower l) (UCons k v (lower r))
+    higher Nil = UEmpty
+    higher (Node _ k m v l r)
+      -- whole set lower: nothing
+      | i `after` m    =  UEmpty
+      -- interval before key: node and complete right subtree + maybe part of the left subtree
+      | i `before`  k  =  mkUnion (higher l) (UCons k v (UAppend r UEmpty))
+      -- interval overlaps or to the right of key: only from right subtree
+      | otherwise      =  higher r
+
+
+-- Helper for building sets from distinct ascending keys and submaps
+data Union k v = UEmpty | Union !(Union k v) !(Union k v)
+               | UCons !k v !(Union k v)
+               | UAppend !(IntervalMap k v) !(Union k v)
+
+mkUnion :: Union k v -> Union k v -> Union k v
+mkUnion UEmpty u = u
+mkUnion u UEmpty = u
+mkUnion u1 u2 = Union u1 u2
+
+fromUnion :: Interval k e => Union k v -> IntervalMap k v
+fromUnion UEmpty               = empty
+fromUnion (UCons key v UEmpty) = singleton key v
+fromUnion (UAppend mp UEmpty)  = turnBlack mp
+fromUnion x                    = fromDistinctAscList (unfold x [])
+  where
+    unfold UEmpty        r = r
+    unfold (Union a b)   r = unfold a (unfold b r)
+    unfold (UCons k v u) r = (k,v) : unfold u r
+    unfold (UAppend s u) r = toAscList' s (unfold u r)
+
 
 -- submaps
 

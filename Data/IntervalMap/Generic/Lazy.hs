@@ -123,6 +123,8 @@ module Data.IntervalMap.Generic.Lazy (
 
             , split
             , splitLookup
+            , M.splitAt
+            , splitIntersecting
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy

@@ -90,7 +90,7 @@ module Data.IntervalMap.Lazy (
             , foldrWithKey, foldlWithKey
 
             -- * Flatten
-            , Data.IntervalMap.Lazy.flattenWith
+            , flattenWith
 
             -- * Conversion
             , elems
@@ -125,6 +125,8 @@ module Data.IntervalMap.Lazy (
 
             , split
             , splitLookup
+            , M.splitAt
+            , splitIntersecting
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy
@@ -156,7 +158,7 @@ module Data.IntervalMap.Lazy (
             ) where
 
 import Data.IntervalMap.Interval as I
-import Data.IntervalMap.Generic.Lazy hiding (IntervalMap, null, filter, lookup, map, foldr, foldl)
+import Data.IntervalMap.Generic.Lazy hiding (IntervalMap, null, filter, lookup, map, foldr, foldl, flattenWith)
 import qualified Data.IntervalMap.Generic.Lazy as M
 
 

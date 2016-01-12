@@ -131,7 +131,7 @@ benchSL :: ([IntRange], SL.IVS IntRange Int) -> Benchmark
 benchSL = benchIV "SortedList" SL.insert SL.lookup SL.containing
 
 benchRB :: ([IntRange], RB.IntervalMap IntRange Int) -> Benchmark
-benchRB = benchIV "RedBlackTree" RB.insert RB.lookup RB.containing
+benchRB = benchIV "RedBlackTree" RB.insert RB.lookup (\m p -> RB.toAscList (RB.containing m p))
 
 benchFT :: ([FT.Interval Int], FT.IntervalMap Int Int) -> Benchmark
 benchFT ~(keys,m) = bgroup "FingerTree" [

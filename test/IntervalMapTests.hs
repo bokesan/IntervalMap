@@ -46,7 +46,7 @@ prop_tests1 =
   Just "single46" == M.lookup (ClosedInterval 4 6) single46 &&
   "single46" == single46 M.! ClosedInterval 4 6 &&
   Nothing == M.lookup (OpenInterval 4 6) single46 &&
-  [(ClosedInterval 4 6, "single46")] == single46 `containing` 5
+  single46 == single46 `containing` 5
 
 
 bal3 :: M.IntervalMap Int String
@@ -66,17 +66,17 @@ prop_tests2 =
   "o58" == bal3' M.! OpenInterval 5 8 &&
   Nothing == M.lookup (OpenInterval 5 8) bal3 &&
   Just "o58" == M.lookup (OpenInterval 5 8) bal3' &&
-  [] == bal3 `containing` 0 &&
-  [] == bal3 `containing` 9 &&
-  [(ClosedInterval 1 4, "14")] == bal3 `containing` 1 &&
-  [(ClosedInterval 5 8, "58")] == bal3 `containing` 8 &&
-  [] == bal3' `containing` 8 &&
-  [(OpenInterval 5 8, "o58")] == bal3' `containing` 7 &&
-  sameElements ["14", "single46"] [v|(_,v) <- bal3 `containing` 4] &&
-  sameElements ["58", "single46"] [v|(_,v) <- bal3 `containing` 5] &&
-  sameElements ["58", "single46"] [v|(_,v) <- bal3 `containing` 6] &&
-  sameElements ["single46"] [v|(_,v) <- bal3' `containing` 5] &&
-  sameElements ["o58", "single46"] [v|(_,v) <- bal3' `containing` 6]
+  M.null (bal3 `containing` 0) &&
+  M.null (bal3 `containing` 9) &&
+  [(ClosedInterval 1 4, "14")] == toAscList (bal3 `containing` 1) &&
+  [(ClosedInterval 5 8, "58")] == toAscList (bal3 `containing` 8) &&
+  M.null (bal3' `containing` 8) &&
+  [(OpenInterval 5 8, "o58")] == toAscList (bal3' `containing` 7) &&
+  sameElements ["14", "single46"] [v|(_,v) <- toAscList (bal3 `containing` 4)] &&
+  sameElements ["58", "single46"] [v|(_,v) <- toAscList (bal3 `containing` 5)] &&
+  sameElements ["58", "single46"] [v|(_,v) <- toAscList (bal3 `containing` 6)] &&
+  sameElements ["single46"] [v|(_,v) <- toAscList (bal3' `containing` 5)] &&
+  sameElements ["o58", "single46"] [v|(_,v) <- toAscList (bal3' `containing` 6)]
 
 
 deep100L :: M.IntervalMap Int Int
@@ -92,11 +92,11 @@ deep100R = construct 1 M.empty
 
 prop_tests3 =
    68 == deep100L M.! (ClosedInterval 68 68) &&
-   [17] == Prelude.map snd (deep100L `containing` 17) &&
+   [17] == Prelude.map snd (toAscList (deep100L `containing` 17)) &&
    100 == M.size deep100L &&
    (M.height deep100L <= 12) &&
    68 == deep100R M.! (ClosedInterval 68 68) &&
-   [17] == Prelude.map snd (deep100R `containing` 17) &&
+   [17] == Prelude.map snd (toAscList (deep100R `containing` 17)) &&
    100 == M.size deep100R &&
    (M.height deep100R <= 12) &&
    M.valid deep100L &&
@@ -222,13 +222,13 @@ prop_map (IMI m) = let m' = M.map (1+) m in
 
 prop_findWithDefault (IMI m) (II k) = M.findWithDefault (lowerBound k) k m == lowerBound k
 
-prop_searchPoint (IMI m) p = sameElements (m `containing` p)
+prop_searchPoint (IMI m) p = sameElements (toList (m `containing` p))
                                           [e | e@(k,_) <- M.toList m, p `inside` k]
 
-prop_searchInterval (IMI m) (II i) = sameElements (m `intersecting` i)
+prop_searchInterval (IMI m) (II i) = sameElements (toList (m `intersecting` i))
                                                   [e | e@(k,_) <- M.toList m, k `overlaps` i]
 
-prop_within (IMI m) (II i) = sameElements (m `M.within` i)
+prop_within (IMI m) (II i) = sameElements (toList (m `M.within` i))
                                           [e | e@(k,_) <- M.toList m, i `subsumes` k]
 
 prop_findMin (IMI m) = not (M.null m) ==> let x = minimum (M.toList m)
@@ -414,6 +414,26 @@ prop_splitLookup (IMI m) (II x) = M.valid l && M.valid r
   where
     (l, value, r) = splitLookup x m
 
+prop_splitAt p (IMI m) =          let (lo,c,hi) = M.splitAt m p in
+                                  M.valid lo && M.valid c && M.valid hi &&
+                                  lo == mfilter (p `above`) m &&
+                                  c  == mfilter (p `inside`) m &&
+                                  hi == mfilter (p `below`) m &&
+                                  M.unions [lo,c,hi] == m &&
+                                  M.size lo + M.size c + M.size hi == M.size m
+
+prop_splitIntersecting (II i) (IMI m) =
+                                  let (lo,c,hi) = M.splitIntersecting m i in
+                                  M.valid lo && M.valid c && M.valid hi &&
+                                  lo == mfilter (i `after`) m &&
+                                  c  == mfilter (i `overlaps`) m &&
+                                  hi == mfilter (i `before`) m &&
+                                  M.unions [lo,c,hi] == m &&
+                                  M.size lo + M.size c + M.size hi == M.size m
+
+mfilter :: (Ord k) => (Interval k -> Bool) -> IntervalMap k a -> IntervalMap k a
+mfilter p m = M.filterWithKey (\k _ -> p k) m
+    
 prop_readShow (IMI m) = m == read (show m)
 
 prop_flatten (IMI m) = let m' = M.flattenWith (+) m in
@@ -489,6 +509,8 @@ main = do
           check prop_filter "filter"
           check prop_partition "partition"
           check prop_splitLookup "splitLookup"
+          check prop_splitAt "splitAt"
+          check prop_splitIntersecting "splitIntersecting"
           check prop_mapKeysWith "mapKeysWith"
           check prop_submap "submap"
           check prop_properSubmap "proper submap"

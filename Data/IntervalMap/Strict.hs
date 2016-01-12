@@ -134,7 +134,7 @@ module Data.IntervalMap.Strict (
             , foldrWithKey, foldlWithKey
 
             -- * Flatten
-            , Data.IntervalMap.Strict.flattenWith
+            , flattenWith
 
             -- * Conversion
             , elems
@@ -169,6 +169,8 @@ module Data.IntervalMap.Strict (
 
             , split
             , splitLookup
+            , M.splitAt
+            , splitIntersecting
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy
@@ -201,7 +203,7 @@ module Data.IntervalMap.Strict (
 
 
 import Data.IntervalMap.Interval as I
-import Data.IntervalMap.Generic.Strict hiding (IntervalMap, null, filter, lookup, map, foldr, foldl)
+import Data.IntervalMap.Generic.Strict hiding (IntervalMap, null, filter, lookup, map, foldr, foldl, flattenWith)
 import qualified Data.IntervalMap.Generic.Strict as M
 
 
