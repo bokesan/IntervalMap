@@ -260,10 +260,10 @@ p `above` (OpenInterval   _ u)  =  p >= u
 p `above` (IntervalOC     _ u)  =  p >  u
 
 -- | If the intervals overlap combine them into one.
-combine :: (Ord a) => Interval a -> Interval a -> Either (Interval a, Interval a) (Interval a)
+combine :: (Ord a) => Interval a -> Interval a -> Maybe (Interval a)
 combine a b =
   if a `overlaps` b
-    then let lowerBoundInterval = minimum [a, b]
+    then let lowerBoundInterval = min a b
              upperBoundInterval = maximumBy compareByUpper [a, b]
              newLowerBound = lowerBound lowerBoundInterval
              newUpperBound = upperBound upperBoundInterval
@@ -275,5 +275,5 @@ combine a b =
                  else if rightClosed upperBoundInterval
                         then IntervalOC     newLowerBound newUpperBound
                         else OpenInterval   newLowerBound newUpperBound
-         in Right interval
-    else Left (a, b)
+         in Just interval
+    else Nothing

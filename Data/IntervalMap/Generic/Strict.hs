@@ -123,6 +123,7 @@ module Data.IntervalMap.Generic.Strict (
             -- ** Fold
             , foldr, foldl
             , foldrWithKey, foldlWithKey
+            , flattenWith, flattenWithMonotonic
 
             -- * Conversion
             , elems
@@ -157,6 +158,8 @@ module Data.IntervalMap.Generic.Strict (
 
             , split
             , splitLookup
+            , splitAt
+            , splitIntersecting
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy
@@ -187,7 +190,7 @@ module Data.IntervalMap.Generic.Strict (
 
             ) where
 
-import Prelude hiding (null, lookup, map, filter, foldr, foldl)
+import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
 import qualified Data.List as L
 import Data.IntervalMap.Generic.Base as M hiding (
       singleton

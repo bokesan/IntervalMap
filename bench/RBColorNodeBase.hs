@@ -250,8 +250,8 @@ findWithDefault def k m = case lookup k m of
 --
 -- /O(n)/, since potentially all keys could contain the point.
 -- /O(log n)/ average case. This is also the worst case for maps containing no overlapping keys.
-containing :: (Interval k e) => IntervalMap k v -> e -> [(k, v)]
-t `containing` pt = go [] pt t
+containing :: (Interval k e) => IntervalMap k v -> e -> IntervalMap k v
+t `containing` pt = fromDistinctAscList (go [] pt t)
   where
     go xs p Nil = p `seq` xs
     go xs p (NodeR k m v l r)
@@ -270,8 +270,8 @@ t `containing` pt = go [] pt t
 --
 -- /O(n)/, since potentially all keys could intersect the interval.
 -- /O(log n)/ average case, if few keys intersect the interval.
-intersecting :: (Interval k e) => IntervalMap k v -> k -> [(k, v)]
-t `intersecting` iv = go [] iv t
+intersecting :: (Interval k e) => IntervalMap k v -> k -> IntervalMap k v
+t `intersecting` iv = fromDistinctAscList (go [] iv t)
   where
     go xs i Nil = i `seq` xs
     go xs i (NodeR k m v l r)
@@ -290,8 +290,8 @@ t `intersecting` iv = go [] iv t
 --
 -- /O(n)/, since potentially all keys could be inside the interval.
 -- /O(log n)/ average case, if few keys are inside the interval.
-within :: (Interval k e) => IntervalMap k v -> k -> [(k, v)]
-t `within` iv = go [] iv t
+within :: (Interval k e) => IntervalMap k v -> k -> IntervalMap k v
+t `within` iv = fromDistinctAscList (go [] iv t)
   where
     go xs i Nil = i `seq` xs
     go xs i (NodeR k m v l r)

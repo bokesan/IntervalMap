@@ -75,24 +75,29 @@ main =
            bench "int"     $ nf L.fromAscList oIvsP,
            bench "node"    $ nf N.fromAscList oIvsP
          ],
+         bgroup "size" [
+           bench "reg"    $ nf S.size sMap,
+           bench "int"    $ nf L.size lMap,
+           bench "node"   $ nf N.size nMap
+         ],
          bgroup "lookup" [
            bench "reg"    $ nf (\m -> [S.lookup i m | i <- lookupKeys]) sMap,
            bench "int"    $ nf (\m -> [L.lookup i m | i <- lookupKeys]) lMap,
            bench "node"   $ nf (\m -> [N.lookup i m | i <- lookupKeys]) nMap
          ],
          bgroup "containing" [
-           bench "reg"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `S.containing` p]) sMap,
-           bench "int"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `L.containing` p]) lMap,
-           bench "node"   $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `N.containing` p]) nMap
+           bench "reg"    $ nf (\m -> sum [v | p <- rndInts, v <- S.elems (m `S.containing` p)]) sMap,
+           bench "int"    $ nf (\m -> sum [v | p <- rndInts, v <- L.elems (m `L.containing` p)]) lMap,
+           bench "node"   $ nf (\m -> sum [v | p <- rndInts, v <- N.elems (m `N.containing` p)]) nMap
          ],
          bgroup "intersecting" [
-           bench "reg"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `S.intersecting` (IV p (p+15))]) sMap,
-           bench "int"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `L.intersecting` (IV p (p+15))]) lMap,
-           bench "node"   $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `N.intersecting` (IV p (p+15))]) nMap
+           bench "reg"    $ nf (\m -> sum [v | p <- rndInts, v <- S.elems (m `S.intersecting` (IV p (p+15)))]) sMap,
+           bench "int"    $ nf (\m -> sum [v | p <- rndInts, v <- L.elems (m `L.intersecting` (IV p (p+15)))]) lMap,
+           bench "node"   $ nf (\m -> sum [v | p <- rndInts, v <- N.elems (m `N.intersecting` (IV p (p+15)))]) nMap
          ],
          bgroup "within" [
-           bench "reg"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `S.within` (IV p (p+15))]) sMap,
-           bench "int"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `L.within` (IV p (p+15))]) lMap,
-           bench "node"   $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `N.within` (IV p (p+15))]) nMap
+           bench "reg"    $ nf (\m -> sum [v | p <- rndInts, v <- S.elems (m `S.within` (IV p (p+15)))]) sMap,
+           bench "int"    $ nf (\m -> sum [v | p <- rndInts, v <- L.elems (m `L.within` (IV p (p+15)))]) lMap,
+           bench "node"   $ nf (\m -> sum [v | p <- rndInts, v <- N.elems (m `N.within` (IV p (p+15)))]) nMap
          ]
        ]

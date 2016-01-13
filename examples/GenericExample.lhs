@@ -70,16 +70,17 @@ that time:
 
 > appointmentsAt :: Time -> Appointments -> [Appointment]
 > appointmentsAt t apps = [ (time, person, details)
->                           | (time, pds) <- apps `containing` t,
+>                           | (time, pds) <- toAscList (apps `containing` t),
 >                             (person, details) <- pds ]
 
 The function to get all appointments that overlap a given timespan is almost
 the same, just using _intersecting_ instead:
 
 > appointmentsDuring :: Time -> Time -> Appointments -> [Appointment]
-> appointmentsDuring from to apps = [ (time, person, details)
->                                     | (time, pds) <- apps `intersecting` mkTimeSpan from to,
->                                       (person, details) <- pds ]
+> appointmentsDuring from to apps =
+>     [ (time, person, details)
+>       | (time, pds) <- toAscList (apps `intersecting` mkTimeSpan from to),
+>         (person, details) <- pds ]
 
 Here is a sample set of appointments and a main function to show some test results:
 

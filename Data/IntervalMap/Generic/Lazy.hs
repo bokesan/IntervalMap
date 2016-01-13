@@ -88,6 +88,7 @@ module Data.IntervalMap.Generic.Lazy (
             -- ** Fold
             , M.foldr, M.foldl
             , foldrWithKey, foldlWithKey
+            , flattenWith, flattenWithMonotonic
 
             -- * Conversion
             , elems
@@ -122,6 +123,8 @@ module Data.IntervalMap.Generic.Lazy (
 
             , split
             , splitLookup
+            , M.splitAt
+            , splitIntersecting
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy

@@ -8,7 +8,7 @@ import System.Exit (exitSuccess, exitFailure)
 import Test.QuickCheck hiding (within)
 import Test.QuickCheck.Test (isSuccess)
 import Control.Monad (liftM)
-import Prelude hiding (null, map, filter, foldr, foldl)
+import Prelude hiding (null, map, filter, foldr, foldl, splitAt)
 import qualified Data.List as L
 
 import Data.IntervalSet
@@ -25,6 +25,10 @@ contains (II a b) n = a <= n && n <= b
 instance Interval II Int where
    lowerBound (II a _) = a
    upperBound (II _ b) = b
+
+combine :: II -> II -> Maybe II
+combine i1@(II a b) i2@(II c d) | i1 `overlaps` i2 = Just (II (min a c) (max b d))
+                                | otherwise = Nothing
 
 instance Arbitrary II where
   arbitrary = do x <- arbitrary
@@ -85,15 +89,16 @@ prop_difference (IS s1) (IS s2) = (s1 \\ s2) == foldr delete s1 s2
                                       
 prop_intersection (IS s1) (IS s2) =
                                   let i = intersection s1 s2 in
+                                  valid i &&
                                   all (\e -> member e s1 && member e s2) (toList i)
                                       
 prop_minView (IS s) =             case minView s of
                                     Nothing -> null s
-                                    Just (min, s') -> all (min <) (toList s')
+                                    Just (min, s') -> valid s' && all (min <) (toList s')
                                   
 prop_maxView (IS s) =             case maxView s of
                                     Nothing -> null s
-                                    Just (max, s') -> all (max >) (toList s')
+                                    Just (max, s') -> valid s' && all (max >) (toList s')
                                     
 prop_findMin (IS s) =             case findMin s of
                                     Nothing  -> null s
@@ -109,11 +114,13 @@ prop_findLast (IS s) =            case findLast s of
                                       all (\e -> upperBound e < end || (upperBound e == end && e <= x)) (toList s)
                                                       
 prop_deleteMin (IS s) =           let s' = deleteMin s in
+                                  valid s' &&
                                   case findMin s of
                                     Nothing  -> null s'
                                     Just min -> s' == delete min s
 
 prop_deleteMax (IS s) =           let s' = deleteMax s in
+                                  valid s' &&
                                   case findMax s of
                                     Nothing  -> null s'
                                     Just max -> s' == delete max s
@@ -141,25 +148,61 @@ prop_splitMember (IS s) iv =      let (lo,m,hi) = splitMember iv s in
                                   all (> iv) (toList hi) &&
                                   union lo hi == if m then delete iv s else s
 
+prop_splitAt1 p (IS s) =          let (lo,_,_) = splitAt s p in
+                                  valid lo && lo == filter (p `above`) s
+
+prop_splitAt2 p (IS s) =          let (_,c,_) = splitAt s p in
+                                  valid c && c == filter (p `inside`) s
+
+prop_splitAt3 p (IS s) =          let (_,_,hi) = splitAt s p in
+                                  valid hi && hi == filter (p `below`) s
+
+prop_splitIntersecting i (IS s) = let (lo,c,hi) = splitIntersecting s i in
+                                  valid lo && valid c && valid hi &&
+                                  lo == filter (i `after`) s &&
+                                  c  == filter (i `overlaps`) s &&
+                                  hi == filter (i `before`) s &&
+                                  unions [lo,c,hi] == s &&
+                                  size lo + size c + size hi == size s
+
 prop_readShow (IS s) =            s == read (show s)
 
 
 prop_containing :: IS -> Int -> Bool
 prop_containing (IS s) n =        let s' = s `containing` n in
+                                  valid s' &&
                                   all (\e -> if e `contains` n then e `member` s' else e `notMember` s') (toList s)
 
 prop_intersecting :: IS -> II -> Bool
 prop_intersecting (IS s) iv =     let s' = s `intersecting` iv in
+                                  valid s' &&
                                   all (\e -> if e `overlaps` iv then e `member` s' else e `notMember` s') (toList s)
                                       
 prop_within :: IS -> II -> Bool
 prop_within (IS s) iv =           let s' = s `within` iv in
+                                  valid s' &&
                                   all (\e -> if iv `subsumes` e then e `member` s' else e `notMember` s') (toList s)
                                   
 prop_foldr  (IS s) iv =           Just (foldr  (\v r -> min v r) iv s) == findMin (insert iv s)
 prop_foldr' (IS s) iv =           Just (foldr' (\v r -> min v r) iv s) == findMin (insert iv s)
 prop_foldl  (IS s) iv =           Just (foldl  (\r v -> min v r) iv s) == findMin (insert iv s)
 prop_foldl' (IS s) iv =           Just (foldl' (\r v -> min v r) iv s) == findMin (insert iv s)
+
+prop_flattenWithMonotonic (IS s) = let s' = flattenWithMonotonic combine s in
+                                   valid s' &&
+                                   size s' <= size s &&
+                                   nonOverlapping (toAscList s') &&
+                                   (null s || (let Just a = findMin s
+                                                   Just b = findMin s'
+                                                   Just c = findLast s
+                                                   Just d = findLast s'
+                                               in lowerBound a == lowerBound b &&
+                                                  upperBound c == upperBound d))
+
+nonOverlapping :: (Interval i e) => [i] -> Bool
+nonOverlapping (x:y:xs) | x `overlaps` y = False
+                        | otherwise      = nonOverlapping (y:xs)
+nonOverlapping _ = True
 
 check p name = do putStrLn ("Testing " ++ name ++ ":")
                   r <- quickCheckWithResult (stdArgs { maxSuccess = 500 }) p
@@ -205,8 +248,13 @@ main = do
          check prop_partition "partition"
          check prop_split "split"
          check prop_splitMember "splitMember"
+         check prop_splitAt1 "splitAt lower"
+         check prop_splitAt2 "splitAt containing"
+         check prop_splitAt3 "splitAt higher"
+         check prop_splitIntersecting "splitIntersecting"
          check prop_containing "containing"
          check prop_intersecting "intersecting"
          check prop_within "within"
+         check prop_flattenWithMonotonic "flattenWithMonotonic"
          check prop_readShow "read/show"
          exitSuccess

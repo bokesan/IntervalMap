@@ -81,12 +81,12 @@ main =
          bgroup "search" [
            bench "lookup lazy"          $ nf (\m -> [L.lookup i m | i <- lookupKeys]) lMap,
            bench "lookup strict"        $ nf (\m -> [S.lookup i m | i <- lookupKeys]) sMap,
-           bench "containing lazy"      $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `L.containing` p]) lMap,
-           bench "containing strict"      $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `S.containing` p]) sMap,
-           bench "intersecting lazy"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `L.intersecting` (IV p (p+15))]) lMap,
-           bench "intersecting strict"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `S.intersecting` (IV p (p+15))]) sMap,
-           bench "within lazy" $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `L.within` (IV p (p+15))]) lMap,
-           bench "within strict" $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `S.within` (IV p (p+15))]) sMap
+           bench "containing lazy"      $ nf (\m -> sum [v | p <- rndInts, v <- L.elems (m `L.containing` p)]) lMap,
+           bench "containing strict"      $ nf (\m -> sum [v | p <- rndInts, v <- S.elems (m `S.containing` p)]) sMap,
+           bench "intersecting lazy"    $ nf (\m -> sum [v | p <- rndInts, v <- L.elems (m `L.intersecting` (IV p (p+15)))]) lMap,
+           bench "intersecting strict"    $ nf (\m -> sum [v | p <- rndInts, v <- S.elems (m `S.intersecting` (IV p (p+15)))]) sMap,
+           bench "within lazy" $ nf (\m -> sum [v | p <- rndInts, v <- L.elems (m `L.within` (IV p (p+15)))]) lMap,
+           bench "within strict" $ nf (\m -> sum [v | p <- rndInts, v <- S.elems (m `S.within` (IV p (p+15)))]) sMap
          ],
          bgroup "mapKeys" [
            bench "lazy"             $ nf (L.mapKeys (move 1)) lMap,

@@ -85,6 +85,9 @@ module Data.IntervalSet (
             , foldr, foldl
             , foldl', foldr'
 
+            -- * Flatten
+            , flattenWith, flattenWithMonotonic
+
             -- * Conversion
             , elems
 
@@ -104,6 +107,8 @@ module Data.IntervalSet (
 
             , split
             , splitMember
+            , splitAt
+            , splitIntersecting
 
             -- * Subset
             , isSubsetOf, isProperSubsetOf
@@ -124,7 +129,7 @@ module Data.IntervalSet (
 
             ) where
 
-import Prelude hiding (null, lookup, map, filter, foldr, foldl)
+import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
 import Data.Bits (shiftR, (.&.))
 import Data.Monoid (Monoid(..))
 import qualified Data.Foldable as Foldable
@@ -144,6 +149,7 @@ infixl 9 \\ --
 m1 \\ m2 = difference m1 m2
 
 
+-- | The Color of a tree node.
 data Color = R | B deriving (Eq)
 
 -- | A set of intervals of type @k@.
@@ -257,46 +263,52 @@ notMember :: (Ord k) => k -> IntervalSet k -> Bool
 notMember key tree = not (member key tree)
 
 -- | Return the set of all intervals containing the given point.
+-- This is the second element of the value of 'splitAt':
+--
+-- > set `containing` p == let (_,s,_) = set `splitAt` p in s
 --
 -- /O(n)/, since potentially all intervals could contain the point.
 -- /O(log n)/ average case. This is also the worst case for sets containing no overlapping intervals.
 containing :: (Interval k e) => IntervalSet k -> e -> IntervalSet k
-t `containing` pt = fromDistinctAscList (go [] pt t)
+t `containing` p = p `seq` fromDistinctAscList (go [] t)
   where
-    go xs p Nil = p `seq` xs
-    go xs p (Node _ k m l r)
+    go xs Nil = xs
+    go xs (Node _ k m l r)
        | p `above` m  =  xs         -- above all intervals in the tree: no result
-       | p `below` k  =  go xs p l  -- to the left of the lower bound: can't be in right subtree
-       | p `inside` k =  go (k : go xs p r) p l
-       | otherwise    =  go (go xs p r) p l
+       | p `below` k  =  go xs l    -- to the left of the lower bound: can't be in right subtree
+       | p `inside` k =  go (k : go xs r) l
+       | otherwise    =  go (go xs r) l
 
 -- | Return the set of all intervals overlapping (intersecting) the given interval.
+-- This is the second element of the result of 'splitIntersecting':
+--
+-- > set `intersecting` i == let (_,s,_) = set `splitIntersecting` i in s
 --
 -- /O(n)/, since potentially all values could intersect the interval.
 -- /O(log n)/ average case, if few values intersect the interval.
 intersecting :: (Interval k e) => IntervalSet k -> k -> IntervalSet k
-t `intersecting` iv = fromDistinctAscList (go [] iv t)
+t `intersecting` i = i `seq` fromDistinctAscList (go [] t)
   where
-    go xs i Nil = i `seq` xs
-    go xs i (Node _ k m l r)
+    go xs Nil = xs
+    go xs (Node _ k m l r)
        | i `after` m     =  xs
-       | i `before` k    =  go xs i l
-       | i `overlaps` k  =  go (k : go xs i r) i l
-       | otherwise       =  go (go xs i r) i l
+       | i `before` k    =  go xs l
+       | i `overlaps` k  =  go (k : go xs r) l
+       | otherwise       =  go (go xs r) l
 
 -- | Return the set of all intervals which are completely inside the given interval.
 --
 -- /O(n)/, since potentially all values could be inside the interval.
 -- /O(log n)/ average case, if few keys are inside the interval.
 within :: (Interval k e) => IntervalSet k -> k -> IntervalSet k
-t `within` iv = fromDistinctAscList (go [] iv t)
+t `within` i = i `seq` fromDistinctAscList (go [] t)
   where
-    go xs i Nil = i `seq` xs
-    go xs i (Node _ k m l r)
+    go xs Nil = xs
+    go xs (Node _ k m l r)
        | i `after` m     =  xs
-       | i `before` k    =  go xs i l
-       | i `subsumes` k  =  go (k : go xs i r) i l
-       | otherwise       =  go (go xs i r) i l
+       | i `before` k    =  go xs l
+       | i `subsumes` k  =  go (k : go xs r) l
+       | otherwise       =  go (go xs r) l
 
 
 -- | /O(log n)/. Insert a new value. If the set already contains an element equal to the value,
@@ -329,13 +341,13 @@ balanceR c xk l r = mNode c xk l r
 
 -- min/max
 
--- | /O(log n)/. Returns the least interval in the set.
+-- | /O(log n)/. Returns the minimal value in the set.
 findMin :: IntervalSet k -> Maybe k
 findMin (Node _ k _ Nil _) = Just k
 findMin (Node _ _ _ l _) = findMin l
 findMin Nil = Nothing
 
--- | /O(log n)/. Returns the largest interval in the set.
+-- | /O(log n)/. Returns the maximal value in the set.
 findMax :: IntervalSet k -> Maybe k
 findMax (Node _ k _ _ Nil) = Just k
 findMax (Node _ _ _ _ r) = findMax r
@@ -351,13 +363,13 @@ findLast :: (Interval k e) => IntervalSet k -> Maybe k
 findLast Nil = Nothing
 findLast t@(Node _ _ mx _ _) = go t
   where
-    go (Node _ k m l r) | sameU m mx = if sameU k m then go r `or` Just k
-                                                    else go r `or` go l
+    go (Node _ k m l r) | sameU m mx = if sameU k m then go r `orElse` Just k
+                                                    else go r `orElse` go l
                         | otherwise  = Nothing
     go Nil = Nothing
     sameU a b = upperBound a == upperBound b && rightClosed a == rightClosed b
-    Nothing `or` x = x
-    x       `or` _ = x
+    Nothing `orElse` x = x
+    x       `orElse` _ = x
 
 
 -- Type to indicate whether the number of black nodes changed or stayed the same.
@@ -574,6 +586,11 @@ ascListIntersection xs@(xk:xs') ys@(yk:ys') =
 toAscList :: IntervalSet k -> [k]
 toAscList m = foldr (\k r -> k : r) [] m
 
+toAscList' :: IntervalSet k -> [k] -> [k]
+toAscList' m xs = foldr (\k r -> k : r) xs m
+
+
+
 -- | /O(n)/. The list of all values in the set, in no particular order.
 toList :: IntervalSet k -> [k]
 toList s = go s []
@@ -703,26 +720,124 @@ splitMember x s = case span (< x) (toAscList s) of
                     (lt, ge@(y:gt)) | y == x    -> (fromDistinctAscList lt, True, fromDistinctAscList gt)
                                     | otherwise -> (fromDistinctAscList lt, False, fromDistinctAscList ge)
 
+-- Helper for building sets from distinct ascending values and subsets
+data Union k = UEmpty | Union !(Union k) !(Union k)
+             | UCons !k !(Union k)
+             | UAppend !(IntervalSet k) !(Union k)
+
+mkUnion :: Union a -> Union a -> Union a
+mkUnion UEmpty u = u
+mkUnion u UEmpty = u
+mkUnion u1 u2 = Union u1 u2
+
+fromUnion :: Interval k e => Union k -> IntervalSet k
+fromUnion UEmpty               = empty
+fromUnion (UCons key UEmpty)   = singleton key
+fromUnion (UAppend set UEmpty) = turnBlack set
+fromUnion x                    = fromDistinctAscList (unfold x [])
+  where
+    unfold UEmpty        r = r
+    unfold (Union a b)   r = unfold a (unfold b r)
+    unfold (UCons k u)   r = k : unfold u r
+    unfold (UAppend s u) r = toAscList' s (unfold u r)
+
+
+-- | /O(n)/. Split around a point.
+-- Splits the set into three subsets: intervals below the point,
+-- intervals containing the point, and intervals above the point.
+splitAt :: (Interval i k, Ord i) => IntervalSet i -> k -> (IntervalSet i, IntervalSet i, IntervalSet i)
+splitAt set p = (fromUnion (lower set), set `containing` p, fromUnion (higher set))
+  where
+    lower Nil = UEmpty
+    lower s@(Node _ k m l r)
+      | p `above`  m  =  UAppend s UEmpty
+      | p `below`  k  =  lower l
+      | p `inside` k  =  mkUnion (lower l) (lower r)
+      | otherwise     =  mkUnion (lower l) (UCons k (lower r))
+    higher Nil = UEmpty
+    higher (Node _ k m l r)
+      | p `above`  m  =  UEmpty
+      | p `below`  k  =  mkUnion (higher l) (UCons k (UAppend r UEmpty))
+      | otherwise     =  higher r
+
+-- | /O(n)/. Split around an interval.
+-- Splits the set into three subsets: intervals below the given interval,
+-- intervals intersecting the given interval, and intervals above the
+-- given interval.
+splitIntersecting :: (Interval i k, Ord i) => IntervalSet i -> i -> (IntervalSet i, IntervalSet i, IntervalSet i)
+splitIntersecting set i = (fromUnion (lower set), set `intersecting` i, fromUnion (higher set))
+  where
+    lower Nil = UEmpty
+    lower s@(Node _ k m l r)
+      -- whole set lower: all
+      | i `after`  m   =  UAppend s UEmpty
+      -- interval before key: only from left subtree
+      | i <= k         =  lower l
+      -- interval intersects key to the right: both subtrees could contain lower intervals
+      | i `overlaps` k =  mkUnion (lower l) (lower r)
+      -- interval to the right of the key: key and both subtrees
+      | otherwise      =  mkUnion (lower l) (UCons k (lower r))
+    higher Nil = UEmpty
+    higher (Node _ k m l r)
+      -- whole set lower: nothing
+      | i `after` m    =  UEmpty
+      -- interval before key: node and complete right subtree + maybe part of the left subtree
+      | i `before`  k  =  mkUnion (higher l) (UCons k (UAppend r UEmpty))
+      -- interval overlaps or to the right of key: only from right subtree
+      | otherwise      =  higher r
+
+
 -- subsets
 
--- | /O(n+m)/.
+-- | /O(n+m)/. Is the first set a subset of the second set?
+-- This is always true for equal sets.
 isSubsetOf :: (Ord k) => IntervalSet k -> IntervalSet k -> Bool
-isSubsetOf m1 m2 = go (toAscList m1) (toAscList m2)
+isSubsetOf set1 set2 = ascListSubset (toAscList set1) (toAscList set2)
+
+ascListSubset :: (Ord a) => [a] -> [a] -> Bool
+ascListSubset []    _  =  True
+ascListSubset (_:_) [] =  False
+ascListSubset s1@(k1:r1) (k2:r2) =
+  case compare k1 k2 of
+    GT -> ascListSubset s1 r2
+    EQ -> ascListSubset r1 r2
+    LT -> False
+
+-- | /O(n+m)/. Is the first set a proper subset of the second set?
+-- (i.e. a subset but not equal).
+isProperSubsetOf :: (Ord k) => IntervalSet k -> IntervalSet k -> Bool
+isProperSubsetOf set1 set2 = go (toAscList set1) (toAscList set2)
   where
-    go []    _  =  True
-    go (_:_) [] =  False
+    go [] (_:_) = True
+    go _  []    = False
     go s1@(k1:r1) (k2:r2) =
        case compare k1 k2 of
-         GT -> go s1 r2
+         GT -> ascListSubset s1 r2
          EQ -> go r1 r2
          LT -> False
 
--- | /O(n+m)/. Is this a proper subset? (ie. a subset but not equal). 
-isProperSubsetOf :: (Ord k) => IntervalSet k -> IntervalSet k -> Bool
-isProperSubsetOf m1 m2 = size m1 < size m2 && isSubsetOf m1 m2
+-- | /O(n log n)/. Build a new set by combining successive values.
+flattenWith :: (Ord a, Interval a e) => (a -> a -> Maybe a) -> IntervalSet a -> IntervalSet a
+flattenWith combine set = fromList (combineSuccessive combine set)
+
+-- | /O(n)/. Build a new set by combining successive values.
+-- Same as 'flattenWith', but works only when the combining functions returns
+-- strictly monotonic values.
+flattenWithMonotonic :: (Interval a e) => (a -> a -> Maybe a) -> IntervalSet a -> IntervalSet a
+flattenWithMonotonic combine set = fromDistinctAscList (combineSuccessive combine set)
+
+combineSuccessive :: (a -> a -> Maybe a) -> IntervalSet a -> [a]
+combineSuccessive combine set = go (toAscList set)
+  where
+    go (x : xs@(_:_)) = go1 x xs
+    go xs             = xs
+    go1 x (y:ys) = case combine x y of
+                     Nothing -> x : go1 y ys
+                     Just x' -> go1 x' ys
+    go1 x []     = [x]
+
 
 -- debugging
-
 
 -- | The height of the tree. For testing/debugging only.
 height :: IntervalSet k -> Int

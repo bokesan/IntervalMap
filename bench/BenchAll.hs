@@ -85,13 +85,13 @@ main =
          bgroup "search" [
            bench "lookup Data.Map" $ nf (\m -> [D.lookup i m | i <- lookupKeys]) dMap,
            bench "lookup"          $ nf (\m -> [M.lookup i m | i <- lookupKeys]) dIvMap,
-           bench "containing"      $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.containing` p]) dIvMap,
-           bench "intersecting"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.intersecting` (ClosedInterval p (p+15))]) dIvMap,
-           bench "within" $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `M.within` (ClosedInterval p (p+15))]) dIvMap,
+           bench "containing"      $ nf (\m -> sum [v | p <- rndInts, v <- M.elems (m `M.containing` p)]) dIvMap,
+           bench "intersecting"    $ nf (\m -> sum [v | p <- rndInts, v <- M.elems (m `M.intersecting` (ClosedInterval p (p+15)))]) dIvMap,
+           bench "within" $ nf (\m -> sum [v | p <- rndInts, v <- M.elems (m `M.within` (ClosedInterval p (p+15)))]) dIvMap,
            bench "G lookup"          $ nf (\m -> [G.lookup i m | i <- lookupKeysG]) gIvMap,
-           bench "G containing"      $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `G.containing` p]) gIvMap,
-           bench "G intersecting"    $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `G.intersecting` (p, p+15)]) gIvMap,
-           bench "G within" $ nf (\m -> sum [v | p <- rndInts, (_,v) <- m `G.within` (p, p+15)]) gIvMap
+           bench "G containing"      $ nf (\m -> sum [v | p <- rndInts, v <- G.elems (m `G.containing` p)]) gIvMap,
+           bench "G intersecting"    $ nf (\m -> sum [v | p <- rndInts, v <- G.elems (m `G.intersecting` (p, p+15))]) gIvMap,
+           bench "G within" $ nf (\m -> sum [v | p <- rndInts, v <- G.elems (m `G.within` (p, p+15))]) gIvMap
          ],
          bgroup "mapKeys" [
            bench "Data.Map"              $ nf (D.mapKeys (move 1)) dMap,

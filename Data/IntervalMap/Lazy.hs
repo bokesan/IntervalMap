@@ -89,6 +89,9 @@ module Data.IntervalMap.Lazy (
             , M.foldr, M.foldl
             , foldrWithKey, foldlWithKey
 
+            -- * Flatten
+            , flattenWith
+
             -- * Conversion
             , elems
             , keys
@@ -122,6 +125,8 @@ module Data.IntervalMap.Lazy (
 
             , split
             , splitLookup
+            , M.splitAt
+            , splitIntersecting
 
             -- * Submap
             , isSubmapOf, isSubmapOfBy
@@ -153,8 +158,16 @@ module Data.IntervalMap.Lazy (
             ) where
 
 import Data.IntervalMap.Interval as I
-import Data.IntervalMap.Generic.Lazy hiding (IntervalMap, null, filter, lookup, map, foldr, foldl)
+import Data.IntervalMap.Generic.Lazy hiding (IntervalMap, null, filter, lookup, map, foldr, foldl, flattenWith)
 import qualified Data.IntervalMap.Generic.Lazy as M
 
 
 type IntervalMap k v = M.IntervalMap (I.Interval k) v
+
+-- | /O(n)/. The list of all key\/value pairs contained in the map, in descending order of keys.
+flattenWith :: (Ord k) => (v -> v -> v) -> IntervalMap k v -> IntervalMap k v
+flattenWith f m = M.flattenWithMonotonic f' m
+  where
+    f' (k1,v1) (k2,v2) = case combine k1 k2 of
+                           Nothing -> Nothing
+                           Just k' -> Just (k', f v1 v2)
