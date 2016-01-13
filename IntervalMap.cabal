@@ -1,7 +1,7 @@
 Name:                IntervalMap
-Version:             0.4.1.1
+Version:             0.5.0.0
 Stability:           experimental
-Synopsis:            Maps from Intervals to values, with efficient search.
+Synopsis:            Containers for intervals, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
 License:             BSD3
 License-file:        LICENSE
