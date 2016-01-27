@@ -633,7 +633,7 @@ updateMaxWithKey f m = let (k,v) = findMax m in
 -- | /O(log n)/. Retrieves the minimal (key,value) pair of the map, and
 -- the map stripped of that element, or 'Nothing' if passed an empty map.
 --
--- > minViewWithKey (fromList [(5,"a"), (3,"b")]) == Just ((3,"b"), singleton 5 "a")
+-- > minViewWithKey (fromList [([5,6],"a"), ([3,4],"b")]) == Just (([3,4],"b"), singleton [5,6] "a")
 -- > minViewWithKey empty == Nothing
 
 minViewWithKey :: (Interval k e, Ord k) => IntervalMap k a -> Maybe ((k, a), IntervalMap k a)
