@@ -6,6 +6,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
 import Control.Monad (liftM)
 import Data.List (maximumBy)
+import Data.Maybe
 
 import Data.IntervalMap.Interval
 
@@ -142,6 +143,15 @@ prop_combine_reflexive (II i) =
   let maybeTest = maybe False
   in maybeTest (i ==) (combine i i)
 
+prop_combine_overlapping (II a) (II b) =
+  (isJust (combine a b)) === (a `overlaps` b)
+
+prop_combine_bounds (II a) (II b) =
+  case combine a b of
+    Nothing -> True
+    Just v -> lowerBound v == min (lowerBound a) (lowerBound b) &&
+              upperBound v == max (upperBound a) (upperBound b)
+
 prop_contains (II i) p =
   if p `inside` i then
     lowerBound i <= p && upperBound i >= p
@@ -155,6 +165,28 @@ prop_subsumes (II i1) = forAll subIv (\(II i2) -> (i1 `subsumes` i2) ==>
 	       
 prop_equals (II a) (II b) =
   (lowerBound a /= lowerBound b || upperBound a /= upperBound b) ==> (a /= b)
+
+prop_below p (II i) =
+  let x = lowerBound i in
+  if p `below` i
+    then (if leftClosed i then p < x else p <= x)
+    else (if leftClosed i then p >= x else p > x)
+
+prop_above p (II i) =
+  let u = upperBound i in
+  if p `above` i
+    then (if rightClosed i then p > u else p >= u)
+    else (if rightClosed i then p <= u else p < u)
+
+prop_after (II a) (II b) =
+  let u = upperBound b
+      l = lowerBound a
+  in
+  if a `after` b
+    then (if rightClosed b && leftClosed a then l > u else l >= u)
+    else (if rightClosed b && leftClosed a then l <= u else l < u)
+
+prop_readShow (II i) =            i === read (show i)
 
 check p name = do r <- quickCheckWithResult (stdArgs { maxSuccess = 500 }) p
 		  if isSuccess r
@@ -179,10 +211,16 @@ main = do
 	 check prop_overlaps "overlaps"
 	 check prop_subsumes1 "subsumes1"
 	 check prop_not_empty "not empty"
+         check prop_below "below"
+         check prop_above "above"
+         check prop_after "after"
 	 check prop_overlaps_symmetric "overlaps symmetric"
 	 check prop_combine_closedness "combine_closedness"
 	 check prop_combine_reflexive "combine_reflexive"
+	 check prop_combine_overlapping "combine_overlapping"
+	 check prop_combine_bounds "combine_bounds"
 	 check prop_contains "contains"
 	 check prop_subsumes "subsumes"
 	 check prop_equals "equals"
+         check prop_readShow "read/show"
 	 exitSuccess
