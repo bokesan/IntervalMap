@@ -1,3 +1,6 @@
+0.5.0.1  Improve performance of combine.
+	 Fix wrong doc comments.
+
 0.5.0.0  Change return type of containing, ... to a map.
          Add splitAt, splitIntersecting, flatten... functions.
          Minor performance tweaks.
