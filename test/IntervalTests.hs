@@ -6,6 +6,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
 import Control.Monad (liftM)
 import Data.List (maximumBy)
+import Data.Maybe
 
 import Data.IntervalMap.Interval
 
@@ -63,34 +64,34 @@ prop_overlaps =
   not (c15 `overlaps` IntervalCO 0 1)
 
 prop_subsumes1 =  (c15 `subsumes` o15) && -- closed subsumes open
-		  not (o15 `subsumes` c15) && -- ~? "open does not subsume closed",
-		  not (co15 `subsumes` c15) && -- "open does not subsume closed",
-		  not (oc15 `subsumes` c15) -- "open does not subsume closed"
+                  not (o15 `subsumes` c15) && -- ~? "open does not subsume closed",
+                  not (co15 `subsumes` c15) && -- "open does not subsume closed",
+                  not (oc15 `subsumes` c15) -- "open does not subsume closed"
 
 ivGen :: Int -> Int -> Gen II
 ivGen lo hi = do start <- choose (lo, hi)
-		 size  <- choose (0, hi - start)
-		 if size == 0
-		  then return (II (ClosedInterval start start))
-		  else oneof [
-		    return (II (ClosedInterval start (start + size))),
-		    return (II (OpenInterval start (start + size))),
-		    return (II (IntervalCO start (start + size))),
-		    return (II (IntervalOC start (start + size))) ]
+                 size  <- choose (0, hi - start)
+                 if size == 0
+                  then return (II (ClosedInterval start start))
+                  else oneof [
+                    return (II (ClosedInterval start (start + size))),
+                    return (II (OpenInterval start (start + size))),
+                    return (II (IntervalCO start (start + size))),
+                    return (II (IntervalOC start (start + size))) ]
 
 newtype II = II (Interval Int) deriving (Show)
 
 instance Arbitrary II where
   arbitrary = do x <- arbitrary
-		 liftM II (interval (abs x))
+                 liftM II (interval (abs x))
 
 interval x = do
-	     y <- sized (\n -> choose (x, x + abs n))
-	     if x == y then return (ClosedInterval x y)
-		else oneof [return (ClosedInterval x y),
-			    return (OpenInterval x y),
-			    return (IntervalCO x y),
-			    return (IntervalOC x y)]
+             y <- sized (\n -> choose (x, x + abs n))
+             if x == y then return (ClosedInterval x y)
+                else oneof [return (ClosedInterval x y),
+                            return (OpenInterval x y),
+                            return (IntervalCO x y),
+                            return (IntervalOC x y)]
 
 -- our generator will never generate empty intervals
 prop_not_empty (II iv) = not (isEmpty iv)
@@ -98,7 +99,7 @@ prop_not_empty (II iv) = not (isEmpty iv)
 prop_leftClosed = leftClosed (ClosedInterval 1 2) &&
                   leftClosed (IntervalCO 1 2) &&
                   not (leftClosed (OpenInterval 1 2)) &&
-		  not (leftClosed (IntervalOC 1 2))
+                  not (leftClosed (IntervalOC 1 2))
 
 prop_rightClosed = rightClosed (ClosedInterval 1 2) &&
                    rightClosed (IntervalOC 1 2) &&
@@ -142,6 +143,15 @@ prop_combine_reflexive (II i) =
   let maybeTest = maybe False
   in maybeTest (i ==) (combine i i)
 
+prop_combine_overlapping (II a) (II b) =
+  (isJust (combine a b)) === (a `overlaps` b)
+
+prop_combine_bounds (II a) (II b) =
+  case combine a b of
+    Nothing -> True
+    Just v -> lowerBound v == min (lowerBound a) (lowerBound b) &&
+              upperBound v == max (upperBound a) (upperBound b)
+
 prop_contains (II i) p =
   if p `inside` i then
     lowerBound i <= p && upperBound i >= p
@@ -149,40 +159,68 @@ prop_contains (II i) p =
     p <= lowerBound i || p >= upperBound i
 
 prop_subsumes (II i1) = forAll subIv (\(II i2) -> (i1 `subsumes` i2) ==>
-						    ((i1 == i2) || not (i2 `subsumes` i1)))
+                                                    ((i1 == i2) || not (i2 `subsumes` i1)))
   where
     subIv = ivGen (lowerBound i1) (upperBound i1)
-	       
+
 prop_equals (II a) (II b) =
   (lowerBound a /= lowerBound b || upperBound a /= upperBound b) ==> (a /= b)
 
+prop_below p (II i) =
+  let x = lowerBound i in
+  if p `below` i
+    then (if leftClosed i then p < x else p <= x)
+    else (if leftClosed i then p >= x else p > x)
+
+prop_above p (II i) =
+  let u = upperBound i in
+  if p `above` i
+    then (if rightClosed i then p > u else p >= u)
+    else (if rightClosed i then p <= u else p < u)
+
+prop_after (II a) (II b) =
+  let u = upperBound b
+      l = lowerBound a
+  in
+  if a `after` b
+    then (if rightClosed b && leftClosed a then l > u else l >= u)
+    else (if rightClosed b && leftClosed a then l <= u else l < u)
+
+prop_readShow (II i) =            i === read (show i)
+
 check p name = do r <- quickCheckWithResult (stdArgs { maxSuccess = 500 }) p
-		  if isSuccess r
-		   then return r
-		   else do putStrLn ("error: " ++ name ++ ": " ++ show r)
-			   exitFailure
+                  if isSuccess r
+                   then return r
+                   else do putStrLn ("error: " ++ name ++ ": " ++ show r)
+                           exitFailure
 
 
 main = do
          check prop_boundsO "boundsO"
-	 check prop_boundsC "boundsC"
-	 check prop_boundsOC "boundsOC"
-	 check prop_boundsCO "boundsCO"
-	 check prop_empty "empty"
-	 check prop_leftClosed "leftClosed"
-	 check prop_rightClosed "rightClosed"
+         check prop_boundsC "boundsC"
+         check prop_boundsOC "boundsOC"
+         check prop_boundsCO "boundsCO"
+         check prop_empty "empty"
+         check prop_leftClosed "leftClosed"
+         check prop_rightClosed "rightClosed"
          check prop_ord "ord"
-	 check prop_compare1 "compare1"
+         check prop_compare1 "compare1"
 	 check prop_compare_openness_closedness_lower_bound "compare_openness_closedness_lower_bound"
 	 check prop_compare_openness_closedness_upper_bound "compare_openness_closedness_upper_bound"
 	 check prop_contains1 "contains1"
 	 check prop_overlaps "overlaps"
 	 check prop_subsumes1 "subsumes1"
 	 check prop_not_empty "not empty"
+         check prop_below "below"
+         check prop_above "above"
+         check prop_after "after"
 	 check prop_overlaps_symmetric "overlaps symmetric"
 	 check prop_combine_closedness "combine_closedness"
 	 check prop_combine_reflexive "combine_reflexive"
+	 check prop_combine_overlapping "combine_overlapping"
+	 check prop_combine_bounds "combine_bounds"
 	 check prop_contains "contains"
 	 check prop_subsumes "subsumes"
 	 check prop_equals "equals"
+         check prop_readShow "read/show"
 	 exitSuccess

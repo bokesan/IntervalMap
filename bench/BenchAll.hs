@@ -99,6 +99,9 @@ main =
            bench "Data.Map monotonic"    $ nf (D.mapKeysMonotonic (move 1)) dMap,
            bench "IntervalMap monotonic" $ nf (M.mapKeysMonotonic (move 1)) dIvMap
          ],
+         bgroup "flatten" [
+           bench "flatten" $ nf (M.flattenWith (+)) dIvMap
+         ],
          bgroup "map" [
            bench "Data.Map"    $ nf (D.map (1+)) dMap,
            bench "IntervalMap" $ nf (M.map (1+)) dIvMap

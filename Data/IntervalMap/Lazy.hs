@@ -164,7 +164,9 @@ import qualified Data.IntervalMap.Generic.Lazy as M
 
 type IntervalMap k v = M.IntervalMap (I.Interval k) v
 
--- | /O(n)/. The list of all key\/value pairs contained in the map, in descending order of keys.
+-- | /O(n)/. Join overlapping intervals with 'combine'.
+--
+-- > flattenWith (+) (fromList [([1,3],5), ([4,6],2), ([5,8],9)]) == mkMap [([1,3],5), ([4,8],11)]
 flattenWith :: (Ord k) => (v -> v -> v) -> IntervalMap k v -> IntervalMap k v
 flattenWith f m = M.flattenWithMonotonic f' m
   where

@@ -28,7 +28,6 @@ module Data.IntervalMap.Interval (
   ) where
 
 import Control.DeepSeq (NFData(rnf))
-import Data.List (maximumBy)
 
 -- | Intervals with endpoints of type @a@.
 --
@@ -261,19 +260,26 @@ p `above` (IntervalOC     _ u)  =  p >  u
 
 -- | If the intervals overlap combine them into one.
 combine :: (Ord a) => Interval a -> Interval a -> Maybe (Interval a)
-combine a b =
-  if a `overlaps` b
-    then let lowerBoundInterval = min a b
-             upperBoundInterval = maximumBy compareByUpper [a, b]
-             newLowerBound = lowerBound lowerBoundInterval
+combine a b | a `overlaps` b = let v = combineOverlapping a b in v `seq` Just v
+            | otherwise      = Nothing
+
+combineOverlapping :: (Ord a) => Interval a -> Interval a -> Interval a
+combineOverlapping a b = case (compareL a b, compareU a b) of
+                           (LT, LT) -> construct a b
+                           (LT, _ ) -> a
+                           (EQ, LT) -> b
+                           (EQ, _ ) -> a
+                           (GT, GT) -> construct b a
+                           (GT, _ ) -> b
+    where
+      construct lowerBoundInterval upperBoundInterval =
+         let newLowerBound = lowerBound lowerBoundInterval
              newUpperBound = upperBound upperBoundInterval
-             interval =
-               if leftClosed lowerBoundInterval
+         in
+             if leftClosed lowerBoundInterval
                  then if rightClosed upperBoundInterval
                         then ClosedInterval newLowerBound newUpperBound
                         else IntervalCO     newLowerBound newUpperBound
                  else if rightClosed upperBoundInterval
                         then IntervalOC     newLowerBound newUpperBound
                         else OpenInterval   newLowerBound newUpperBound
-         in Just interval
-    else Nothing
