@@ -185,7 +185,7 @@ instance (NFData k) => NFData (IntervalSet k) where
     rnf Nil = ()
     rnf (Node _ kx _ l r) = kx `deepseq` l `deepseq` r `deepseq` ()
 
-instance (Ord k, Read k, Interval i k, Ord i, Read i) => Read (IntervalSet i) where
+instance (Interval i k, Ord i, Read i) => Read (IntervalSet i) where
   readsPrec p = readParen (p > 10) $ \ r -> do
     ("fromList",s) <- lex r
     (xs,t) <- reads s
@@ -679,7 +679,7 @@ elems s = toAscList s
 --
 -- The size of the result may be smaller if @f@ maps two or more distinct
 -- elements to the same value.
-map :: (Interval a e1, Interval b e2, Ord b) => (a -> b) -> IntervalSet a -> IntervalSet b
+map :: (Interval b e2, Ord b) => (a -> b) -> IntervalSet a -> IntervalSet b
 map f s = fromList [f x | x <- toList s]
 
 -- | /O(n)/. @'mapMonotonic' f s == 'map' f s@, but works only when @f@
@@ -745,7 +745,7 @@ fromUnion x                    = fromDistinctAscList (unfold x [])
 -- | /O(n)/. Split around a point.
 -- Splits the set into three subsets: intervals below the point,
 -- intervals containing the point, and intervals above the point.
-splitAt :: (Interval i k, Ord i) => IntervalSet i -> k -> (IntervalSet i, IntervalSet i, IntervalSet i)
+splitAt :: (Interval i k) => IntervalSet i -> k -> (IntervalSet i, IntervalSet i, IntervalSet i)
 splitAt set p = (fromUnion (lower set), set `containing` p, fromUnion (higher set))
   where
     lower Nil = UEmpty

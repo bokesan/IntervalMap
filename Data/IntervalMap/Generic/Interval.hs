@@ -105,18 +105,18 @@ instance Ord e => Interval (e,e) e where
   upperBound (_,b) = b
 -}
 
-genericEquals :: (Interval i e, Eq e) => i -> i -> Bool
+genericEquals :: (Interval i e) => i -> i -> Bool
 genericEquals a b = lowerBound a == lowerBound b && upperBound a == upperBound b
                     && leftClosed a == leftClosed b
                     && rightClosed a == rightClosed b
 
-genericCompare :: (Interval i e, Ord e) => i -> i -> Ordering
+genericCompare :: (Interval i e) => i -> i -> Ordering
 genericCompare a b = case compareL a b of
                        LT -> LT
                        GT -> GT
                        EQ -> compareU a b
 
-compareL :: (Interval i e, Ord e) => i -> i -> Ordering
+compareL :: (Interval i e) => i -> i -> Ordering
 compareL a b = case compare (lowerBound a) (lowerBound b) of
                  LT -> LT
                  GT -> GT
@@ -125,7 +125,7 @@ compareL a b = case compare (lowerBound a) (lowerBound b) of
                          (False, True) -> GT
                          _ -> EQ
 
-compareU :: (Interval i e, Ord e) => i -> i -> Ordering
+compareU :: (Interval i e) => i -> i -> Ordering
 compareU a b = case compare (upperBound a) (upperBound b) of
                  LT -> LT
                  GT -> GT
