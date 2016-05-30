@@ -221,8 +221,9 @@ maxUpper k (Node _ _ l _ _) (Node _ _ r _ _) = maxByUpper k (maxByUpper l r)
 
 -- interval with the greatest upper bound. The lower bound is ignored!
 maxByUpper :: (Interval i e) => i -> i -> i
-maxByUpper a b | rightClosed a = if upperBound a >= upperBound b then a else b
-               | otherwise     = if upperBound a >  upperBound b then a else b
+maxByUpper a b = case compareUpperBounds a b of
+                   LT -> b
+                   _  -> a
 
 -- ---------------------------------------------------------
 
@@ -619,7 +620,7 @@ uniq (x:xs) = go x xs
     go v [] = [v]
     go v (y:ys) | v == y    = go v ys
                 | otherwise = v : go y ys
-                              
+
 -- Strict tuple
 data T2 a b = T2 !a !b
 

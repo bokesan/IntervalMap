@@ -304,8 +304,9 @@ maxUpper k (Node _ _ l _ _ _) (Node _ _ r _ _ _) = maxByUpper k (maxByUpper l r)
 
 -- interval with the greatest upper bound. The lower bound is ignored!
 maxByUpper :: (Interval i e) => i -> i -> i
-maxByUpper a b | rightClosed a = if upperBound a >= upperBound b then a else b
-               | otherwise     = if upperBound a >  upperBound b then a else b
+maxByUpper a b = case compareUpperBounds a b of
+                   LT -> b
+                   _  -> a
 
 -- ---------------------------------------------------------
 

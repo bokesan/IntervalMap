@@ -98,6 +98,16 @@ class Ord e => Interval i e | i -> e where
   isEmpty i | leftClosed i && rightClosed i = lowerBound i >  upperBound i
             | otherwise                     = lowerBound i >= upperBound i
 
+  compareUpperBounds :: i -> i -> Ordering
+  compareUpperBounds a b = case compare (upperBound a) (upperBound b) of
+                             LT -> LT
+                             GT -> GT
+                             EQ -> case (rightClosed a, rightClosed b) of
+                                     (False, True) -> LT
+                                     (True, False) -> GT
+                                     _             -> EQ
+
+
 {-
 -- sample instance for tuples:
 instance Ord e => Interval (e,e) e where
@@ -147,3 +157,4 @@ instance Ord a => Interval (I.Interval a) a where
     below       = I.below
     inside      = I.inside
     isEmpty     = I.isEmpty
+    compareUpperBounds = I.compareByUpper
