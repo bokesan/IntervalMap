@@ -59,12 +59,12 @@ main =
       daIvsP <- ensure $ [IV x x | x <- [1 .. cDATA_SIZE]]
       mainWith
        (do
-         func ("C.fromList " ++ n) C.fromList ivsP
-         func ("S.fromList " ++ n) S.fromList ivsP
-         func ("C.fromDistinctAscList " ++ n) C.fromDistinctAscList daIvsP
-         func ("S.fromDistinctAscList " ++ n) S.fromDistinctAscList daIvsP
-         func ("C.fromAscList " ++ n) C.fromAscList oIvsP
-         func ("S.fromAscList " ++ n) S.fromAscList oIvsP
-         func ("C.mapMonotonic") (C.mapMonotonic id) cS
-         func ("S.mapMonotonic") (S.mapMonotonic id) sS
+         func ("Data.Set    fromList " ++ n)            C.fromList ivsP
+         func ("IntervalSet fromList " ++ n)            S.fromList ivsP
+         func ("Data.Set    fromAscList " ++ n)         C.fromAscList oIvsP
+         func ("IntervalSet fromAscList " ++ n)         S.fromAscList oIvsP
+         func ("Data.Set    fromDistinctAscList " ++ n) C.fromDistinctAscList daIvsP
+         func ("IntervalSet fromDistinctAscList " ++ n) S.fromDistinctAscList daIvsP
+         func ("Data.Set    mapMonotonic " ++ n)        (C.mapMonotonic id) cS
+         func ("IntervalSet mapMonotonic " ++ n)        (S.mapMonotonic id) sS
          )
