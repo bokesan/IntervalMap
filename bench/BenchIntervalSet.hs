@@ -91,7 +91,12 @@ main =
          ],
          bgroup "map" [
            bench "map"      $ nf (S.map (move 1)) set,
-           bench "monotonic" $ nf (S.mapMonotonic id) set
+           bench "monotonic" $ nf (S.mapMonotonic (move 1)) set
+         ],
+         bgroup "delete" [
+           bench "deleteMin"    $ nf S.deleteMin set,
+           bench "deleteMax"    $ nf S.deleteMax set,
+           bench "delete"       $ nf (\(k,s) -> S.delete k s) (head rndIvs, set)
          ]
        ]
 
@@ -116,7 +121,7 @@ maxValue s = case S.findMax s of
                Nothing -> 0
                Just (IV lo _) -> lo
              
-splitAt1, splitAt2, splitAt3 :: (Interval i e, Ord i) => S.IntervalSet i -> e -> S.IntervalSet i
+splitAt1, splitAt2, splitAt3 :: (Interval i e) => S.IntervalSet i -> e -> S.IntervalSet i
 splitAt1 s p = case S.splitAt s p of (lo,_,_) -> lo
 splitAt2 s p = case S.splitAt s p of (_,c,_) -> c
 splitAt3 s p = case S.splitAt s p of (_,_,hi) -> hi
