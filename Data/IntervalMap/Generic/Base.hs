@@ -268,7 +268,7 @@ instance (NFData k, NFData a) => NFData (IntervalMap k a) where
     rnf Nil = ()
     rnf (Node _ kx _ x l r) = kx `deepseq` x `deepseq` l `deepseq` r `deepseq` ()
 
-instance (Ord k, Read k, Read e, Interval i k, Ord i, Read i) => Read (IntervalMap i e) where
+instance (Read e, Interval i k, Ord i, Read i) => Read (IntervalMap i e) where
   readsPrec p = readParen (p > 10) $ \ r -> do
     ("fromList",s) <- lex r
     (xs,t) <- reads s
@@ -304,8 +304,10 @@ maxUpper k (Node _ _ l _ _ _) (Node _ _ r _ _ _) = maxByUpper k (maxByUpper l r)
 
 -- interval with the greatest upper bound. The lower bound is ignored!
 maxByUpper :: (Interval i e) => i -> i -> i
-maxByUpper a b | rightClosed a = if upperBound a >= upperBound b then a else b
-               | otherwise     = if upperBound a >  upperBound b then a else b
+maxByUpper a b = a `seq` b `seq`
+                 case compareUpperBounds a b of
+                   LT -> b
+                   _  -> a
 
 -- ---------------------------------------------------------
 
@@ -1042,7 +1044,7 @@ keys :: IntervalMap k v -> [k]
 keys m = [k | (k,_) <- toAscList m]
 
 -- | /O(n)/. Set of the keys.
-keysSet :: (Ord k) => IntervalMap k v -> Set.Set k
+keysSet :: IntervalMap k v -> Set.Set k
 keysSet m =  Set.fromDistinctAscList (keys m)
 
 -- | Same as 'toAscList'.
@@ -1190,7 +1192,7 @@ splitLookup x m = case span (\(k,_) -> k < x) (toAscList m) of
 -- | /O(n)/. Split around a point.
 -- Splits the map into three submaps: intervals below the point,
 -- intervals containing the point, and intervals above the point.
-splitAt :: (Interval i k, Ord i) => IntervalMap i a -> k -> (IntervalMap i a, IntervalMap i a, IntervalMap i a)
+splitAt :: (Interval i k) => IntervalMap i a -> k -> (IntervalMap i a, IntervalMap i a, IntervalMap i a)
 splitAt mp p = (fromUnion (lower mp), mp `containing` p, fromUnion (higher mp))
   where
     lower Nil = UEmpty

@@ -6,4 +6,6 @@
 *.tix
 .hpc/
 /dist/
+/dist-newstyle/
+/cabal.project.local
 /doc/
