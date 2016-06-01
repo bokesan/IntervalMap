@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.5.0.1
+Version:             0.5.1.0
 Stability:           experimental
 Synopsis:            Containers for intervals, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
@@ -8,11 +8,11 @@ License-file:        LICENSE
 Author:              Christoph Breitkopf
 Maintainer:          Christoph Breitkopf <chbreitkopf@gmail.com>
 bug-reports:         mailto:chbreitkopf@gmail.com
-Copyright:           2011-2015 Christoph Breitkopf
+Copyright:           2011-2016 Christoph Breitkopf
 Category:            Data
 Build-type:          Simple
 Cabal-version:       >= 1.8
-Tested-With:         GHC ==7.4.2, GHC ==7.6.3, GHC ==7.8.4, GHC ==7.10.2
+Tested-With:         GHC ==7.4.2, GHC ==7.6.3, GHC ==7.8.4, GHC ==7.10.2, GHC ==8.0.1
 Description:
                      Ordered containers of intervals, with efficient search
                      for all keys containing a point or overlapping an interval.
