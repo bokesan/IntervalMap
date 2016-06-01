@@ -89,9 +89,9 @@ main =
            bench "spi2"         $ whnf (\s -> sum [maxValue (spi2 s i) | i <- rndIvs]) set,
            bench "spi3"         $ whnf (\s -> sum [maxValue (spi3 s i) | i <- rndIvs]) set
          ],
-         bgroup "mapKeys" [
-           bench "mapKeys"      $ nf (S.map (move 1)) set,
-           bench "monotonic"    $ nf (S.mapMonotonic (move 1)) set
+         bgroup "map" [
+           bench "map"      $ nf (S.map (move 1)) set,
+           bench "monotonic" $ nf (S.mapMonotonic id) set
          ]
        ]
 
