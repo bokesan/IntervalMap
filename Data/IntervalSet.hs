@@ -135,6 +135,7 @@ import Data.Monoid (Monoid(..))
 import qualified Data.Foldable as Foldable
 import qualified Data.List as L
 import Control.DeepSeq
+import Control.Applicative ((<|>))
 import qualified Data.Foldable as Foldable
 
 import Data.IntervalMap.Generic.Interval
@@ -365,13 +366,11 @@ findLast :: (Interval k e) => IntervalSet k -> Maybe k
 findLast Nil = Nothing
 findLast t@(Node _ _ mx _ _) = go t
   where
-    go (Node _ k m l r) | sameU m mx = if sameU k m then go r `orElse` Just k
-                                                    else go r `orElse` go l
+    go (Node _ k m l r) | sameU m mx = if sameU k m then go r <|> Just k
+                                                    else go r <|> go l
                         | otherwise  = Nothing
     go Nil = Nothing
-    sameU a b = upperBound a == upperBound b && rightClosed a == rightClosed b
-    Nothing `orElse` x = x
-    x       `orElse` _ = x
+    sameU a b = compareUpperBounds a b == EQ
 
 
 -- Type to indicate whether the number of black nodes changed or stayed the same.

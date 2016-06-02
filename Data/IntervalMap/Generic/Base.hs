@@ -196,9 +196,10 @@ module Data.IntervalMap.Generic.Base (
             ) where
 
 import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
+import Data.Maybe (fromJust)
 import Data.Bits (shiftR, (.&.))
 import Data.Monoid (Monoid(..))
-import Control.Applicative (Applicative(..), (<$>))
+import Control.Applicative (Applicative(..), (<$>), (<|>))
 import Data.Traversable (Traversable(traverse))
 import qualified Data.Foldable as Foldable
 import qualified Data.List as L
@@ -516,13 +517,13 @@ findMax Nil = error "IntervalMap.findMin: empty map"
 -- /O(log n)/ average case.
 findLast :: (Interval k e) => IntervalMap k v -> (k, v)
 findLast Nil = error "IntervalMap.findLast: empty map"
-findLast t@(Node _ _ mx _ _ _) = head (go t)
+findLast t@(Node _ _ mx _ _ _) = fromJust (go t)
   where
-    go Nil = []
-    go (Node _ k m v l r) | sameU m mx = if sameU k m then go r ++ [(k,v)]
-                                                      else go r ++ go l
-                          | otherwise  = []
-    sameU a b = upperBound a == upperBound b && rightClosed a == rightClosed b
+    go Nil = Nothing
+    go (Node _ k m v l r) | sameU m mx = if sameU k m then go r <|> Just (k,v)
+                                                      else go r <|> go l
+                          | otherwise  = Nothing
+    sameU a b = compareUpperBounds a b == EQ
 
 
 -- Type to indicate whether the number of black nodes changed or stayed the same.
