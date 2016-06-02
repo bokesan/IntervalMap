@@ -130,6 +130,13 @@ main =
            bench "Data.Map"    $ nf (\m -> D.difference m dMapSmall) dMap,
            bench "IntervalMap" $ nf (\m -> M.difference m dIvMapSmall) dIvMap
          ],
+         bgroup "min/max" [
+           bench "findMin Data.Map"      $ nf D.findMin dMap,
+           bench "findMax Data.Map"      $ nf D.findMax dMap,
+           bench "findMin IntervalMap"   $ nf M.findMin dIvMap,
+           bench "findMax IntervalMap"   $ nf M.findMax dIvMap,
+           bench "findLast IntervalMap"  $ nf M.findLast dIvMap
+         ],
          bgroup "delete" [
            bench "deleteMin Data.Map"    $ nf (bogoSize D.null D.deleteMin) dMap,
            bench "deleteMax Data.Map"    $ nf (bogoSize D.null D.deleteMax) dMap,
