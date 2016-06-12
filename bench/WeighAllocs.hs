@@ -11,6 +11,8 @@ import Data.Foldable (foldr)
 import Data.IntervalMap.Generic.Interval
 import qualified Data.IntervalSet as S
 import qualified Data.Set as C
+import qualified Data.Map.Strict as M
+import qualified Data.IntervalMap.Generic.Strict as IVM
 
 
 seed :: Int
@@ -56,15 +58,27 @@ main =
       cS     <- ensure $ C.fromList ivsP
       sS     <- ensure $ S.fromList ivsP
       oIvsP  <- ensure $ C.toAscList cS
-      daIvsP <- ensure $ [IV x x | x <- [1 .. cDATA_SIZE]]
+      let m = show (length oIvsP)
+      kvs    <- ensure $ [(iv, lowerBound iv) | iv <- ivsP]
+      cMap   <- ensure $ M.fromList kvs
+      ivMap  <- ensure $ IVM.fromList kvs
+      oKvs   <- ensure $ M.toAscList cMap
       mainWith
        (do
          func ("Data.Set    fromList " ++ n)            C.fromList ivsP
          func ("IntervalSet fromList " ++ n)            S.fromList ivsP
-         func ("Data.Set    fromAscList " ++ n)         C.fromAscList oIvsP
-         func ("IntervalSet fromAscList " ++ n)         S.fromAscList oIvsP
-         func ("Data.Set    fromDistinctAscList " ++ n) C.fromDistinctAscList daIvsP
-         func ("IntervalSet fromDistinctAscList " ++ n) S.fromDistinctAscList daIvsP
-         func ("Data.Set    mapMonotonic " ++ n)        (C.mapMonotonic id) cS
-         func ("IntervalSet mapMonotonic " ++ n)        (S.mapMonotonic id) sS
+         func ("Data.Set    fromAscList " ++ m)         C.fromAscList oIvsP
+         func ("IntervalSet fromAscList " ++ m)         S.fromAscList oIvsP
+         func ("Data.Set    fromDistinctAscList " ++ m) C.fromDistinctAscList oIvsP
+         func ("IntervalSet fromDistinctAscList " ++ m) S.fromDistinctAscList oIvsP
+         func ("Data.Set    mapMonotonic " ++ m)        (C.mapMonotonic id) cS
+         func ("IntervalSet mapMonotonic " ++ m)        (S.mapMonotonic id) sS
+         func ("Data.Map    fromList " ++ n)            M.fromList kvs
+         func ("IntervalMap fromList " ++ n)            IVM.fromList kvs
+         func ("Data.Map    fromAscList " ++ m)         M.fromAscList oKvs
+         func ("IntervalMap fromAscList " ++ m)         IVM.fromAscList oKvs
+         func ("Data.Map    fromDistinctAscList " ++ m) M.fromDistinctAscList oKvs
+         func ("IntervalMap fromDistinctAscList " ++ m) IVM.fromDistinctAscList oKvs
+         func ("Data.Map    mapKeysMonotonic " ++ m)    (M.mapKeysMonotonic id) cMap
+         func ("IntervalMap mapKeysMonotonic " ++ m)    (IVM.mapKeysMonotonic id) ivMap
          )
