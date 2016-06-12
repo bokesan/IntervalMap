@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.5.1.0
+Version:             0.5.1.1
 Stability:           experimental
 Synopsis:            Containers for intervals, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
