@@ -15,6 +15,7 @@
 -- The contructor names of the half-open intervals seem somewhat clumsy,
 -- and I'm open to suggestions for better names.
 --
+{-# LANGUAGE DeriveGeneric #-}
 module Data.IntervalMap.Interval (
     -- * Interval type
     Interval(..),
@@ -28,7 +29,7 @@ module Data.IntervalMap.Interval (
   ) where
 
 import Control.DeepSeq (NFData(rnf))
-
+import GHC.Generics
 -- | Intervals with endpoints of type @a@.
 --
 -- 'Read' and 'Show' use mathematical notation with square brackets for closed
@@ -40,7 +41,7 @@ data Interval a = IntervalCO !a !a      -- ^ Including lower bound, excluding up
                 | ClosedInterval !a !a  -- ^ Closed at both ends
                 | OpenInterval !a !a    -- ^ Open at both ends
                 | IntervalOC !a !a      -- ^ Excluding lower bound, including upper
-                  deriving (Eq)
+                  deriving (Eq, Generic)
 
 instance Show a => Show (Interval a) where
   showsPrec _ (IntervalCO     a b) = showChar '[' . shows a . showChar ',' . shows b . showChar ')'
