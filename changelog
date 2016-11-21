@@ -1,3 +1,5 @@
+0.5.2.0  Bugfix: exported Prelude functions instead of correct ones.
+
 0.5.1.1  Improve performance of findLast.
 
 0.5.1.0  Major performance improvements.
