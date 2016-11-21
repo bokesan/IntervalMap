@@ -1,4 +1,4 @@
-# IntervalMap [![Build Status](https://travis-ci.org/bokesan/IntervalMap.svg?branch=master)](https://travis-ci.org/bokesan/IntervalMap)
+# IntervalMap [![Hackage](https://img.shields.io/hackage/v/IntervalMap.svg)](https://hackage.haskell.org/package/IntervalMap) [![Build Status](https://travis-ci.org/bokesan/IntervalMap.svg?branch=master)](https://travis-ci.org/bokesan/IntervalMap)
 
 *@GitHub users:* please base pull requests on the *develop* branch. Thanks.
 
