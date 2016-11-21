@@ -169,7 +169,7 @@ module Data.IntervalMap.Strict (
 
             , split
             , splitLookup
-            , M.splitAt
+            , splitAt
             , splitIntersecting
 
             -- * Submap
@@ -202,8 +202,9 @@ module Data.IntervalMap.Strict (
             ) where
 
 
+import Prelude hiding (filter, foldl, foldr, lookup, map, null, splitAt)
 import Data.IntervalMap.Interval as I
-import Data.IntervalMap.Generic.Strict hiding (IntervalMap, null, filter, lookup, map, foldr, foldl, flattenWith)
+import Data.IntervalMap.Generic.Strict hiding (IntervalMap, flattenWith)
 import qualified Data.IntervalMap.Generic.Strict as M
 
 
