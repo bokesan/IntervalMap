@@ -24,11 +24,11 @@ module Data.IntervalMap.Generic.Lazy (
             , (!), (\\)
 
             -- * Query
-            , M.null
+            , null
             , size
             , member
             , notMember
-            , M.lookup
+            , lookup
             , findWithDefault
 
             -- ** Interval query
@@ -76,7 +76,7 @@ module Data.IntervalMap.Generic.Lazy (
 
             -- * Traversal
             -- ** Map
-            , M.map
+            , map
             , mapWithKey
             , mapAccum
             , mapAccumWithKey
@@ -86,7 +86,7 @@ module Data.IntervalMap.Generic.Lazy (
             , mapKeysMonotonic
 
             -- ** Fold
-            , M.foldr, M.foldl
+            , foldr, foldl
             , foldrWithKey, foldlWithKey
             , flattenWith, flattenWithMonotonic
 
@@ -111,7 +111,7 @@ module Data.IntervalMap.Generic.Lazy (
             , fromDistinctAscList
 
             -- * Filter
-            , M.filter
+            , filter
             , filterWithKey
             , partition
             , partitionWithKey
@@ -123,7 +123,7 @@ module Data.IntervalMap.Generic.Lazy (
 
             , split
             , splitLookup
-            , M.splitAt
+            , splitAt
             , splitIntersecting
 
             -- * Submap
@@ -155,4 +155,5 @@ module Data.IntervalMap.Generic.Lazy (
 
             ) where
 
-import Data.IntervalMap.Generic.Base as M
+import Prelude hiding (filter, foldl, foldr, lookup, map, null, splitAt)
+import Data.IntervalMap.Generic.Base
