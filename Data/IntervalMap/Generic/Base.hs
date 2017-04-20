@@ -44,6 +44,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Data.IntervalMap.Generic.Base (
             -- * re-export
             Interval(..)
@@ -205,6 +206,7 @@ import qualified Data.Foldable as Foldable
 import qualified Data.List as L
 import qualified Data.Set as Set
 import Control.DeepSeq
+import GHC.Generics
 
 import Data.IntervalMap.Generic.Interval
 
@@ -227,7 +229,7 @@ tree ! key = case lookup key tree of
 m1 \\ m2 = difference m1 m2
 
 
-data Color = R | B deriving (Eq, Read, Show)
+data Color = R | B deriving (Eq, Read, Show, Generic)
 
 -- | A map from intervals of type @k@ to values of type @v@.
 data IntervalMap k v = Nil
@@ -237,7 +239,7 @@ data IntervalMap k v = Nil
                              v             -- value
                              !(IntervalMap k v) -- left subtree
                              !(IntervalMap k v) -- right subtree
-
+  deriving (Generic)
 instance (Eq k, Eq v) => Eq (IntervalMap k v) where
   a == b = toAscList a == toAscList b
 

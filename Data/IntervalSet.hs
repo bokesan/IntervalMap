@@ -40,6 +40,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module Data.IntervalSet (
             -- * re-export
             Interval(..)
@@ -137,6 +139,7 @@ import qualified Data.List as L
 import Control.DeepSeq
 import Control.Applicative ((<|>))
 import qualified Data.Foldable as Foldable
+import GHC.Generics
 
 import Data.IntervalMap.Generic.Interval
 
@@ -160,7 +163,7 @@ data IntervalSet k = Nil
                           !k -- interval with maximum upper in tree
                           !(IntervalSet k) -- left subtree
                           !(IntervalSet k) -- right subtree
-
+  deriving (Generic)
 instance (Eq k) => Eq (IntervalSet k) where
   a == b = toAscList a == toAscList b
 
