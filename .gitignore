@@ -5,6 +5,8 @@
 *.prof
 *.tix
 .hpc/
+/stack.yaml
+.stack-work/
 /dist/
 /dist-newstyle/
 /cabal.project.local
