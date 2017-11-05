@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.5.2.0
+Version:             0.5.3.0
 Stability:           experimental
 Synopsis:            Containers for intervals, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
@@ -8,7 +8,7 @@ License-file:        LICENSE
 Author:              Christoph Breitkopf
 Maintainer:          Christoph Breitkopf <chbreitkopf@gmail.com>
 bug-reports:         mailto:chbreitkopf@gmail.com
-Copyright:           2011-2016 Christoph Breitkopf
+Copyright:           2011-2017 Christoph Breitkopf
 Category:            Data
 Build-type:          Simple
 Cabal-version:       >= 1.8
