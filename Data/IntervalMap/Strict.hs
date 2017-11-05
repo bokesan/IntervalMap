@@ -74,6 +74,10 @@ module Data.IntervalMap.Strict (
             , notMember
             , lookup
             , findWithDefault
+            , lookupLT
+            , lookupGT
+            , lookupLE
+            , lookupGE
 
             -- ** Interval query
             , containing

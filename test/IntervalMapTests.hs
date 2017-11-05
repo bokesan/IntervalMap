@@ -153,6 +153,34 @@ prop_max (IMI m) = if M.null m then M.null (M.deleteMax m) else
                                       in notMember k m' && M.size m == M.size m' + 1
                                          && k == maximum (M.keys m) && valid m'
 
+prop_lookupLT (IMI m) (II k) = case M.lookupLT k m of
+                                 Nothing -> all (>= k) (M.keys m)
+                                 Just (rk,rv) -> case Prelude.filter (< k) (M.keys m) of
+                                                   [] -> False
+                                                   ks -> let mk = maximum ks in
+                                                         rk == mk && m M.! mk == rv
+
+prop_lookupGT (IMI m) (II k) = case M.lookupGT k m of
+                                 Nothing -> all (<= k) (M.keys m)
+                                 Just (rk,rv) -> case Prelude.filter (> k) (M.keys m) of
+                                                   [] -> False
+                                                   ks -> let mk = minimum ks in
+                                                         rk == mk && m M.! mk == rv
+
+prop_lookupLE (IMI m) (II k) = case M.lookupLE k m of
+                                 Nothing -> all (> k) (M.keys m)
+                                 Just (rk,rv) -> case Prelude.filter (<= k) (M.keys m) of
+                                                   [] -> False
+                                                   ks -> let mk = maximum ks in
+                                                         rk == mk && m M.! mk == rv
+
+prop_lookupGE (IMI m) (II k) = case M.lookupGE k m of
+                                 Nothing -> all (< k) (M.keys m)
+                                 Just (rk,rv) -> case Prelude.filter (>= k) (M.keys m) of
+                                                   [] -> False
+                                                   ks -> let mk = minimum ks in
+                                                         rk == mk && m M.! mk == rv
+
 prop_minViewWithKey (IMI m) = case minViewWithKey m of
                                 Nothing -> M.null m
                                 Just (kv, m') -> kv == findMin m && valid m' && m' == deleteMin m
@@ -475,6 +503,10 @@ main = do
           check prop_insert "insert"
           check prop_min "min"
           check prop_max "max"
+          check prop_lookupLT "lookupLT"
+          check prop_lookupGT "lookupGT"
+          check prop_lookupLE "lookupLE"
+          check prop_lookupGE "lookupGE"
           check prop_findWithDefault "findWithDefault"
           check prop_searchPoint "searchPoint"
           check prop_searchInterval "searchInterval"

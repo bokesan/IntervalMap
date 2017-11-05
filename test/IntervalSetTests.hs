@@ -112,7 +112,31 @@ prop_findLast (IS s) =            case findLast s of
                                     Nothing -> null s
                                     Just x@(II _ end) ->
                                       all (\e -> upperBound e < end || (upperBound e == end && e <= x)) (toList s)
-                                                      
+
+prop_lookupLT (IS s) iv =         case lookupLT iv s of
+                                    Nothing -> all (>= iv) (toList s)
+                                    Just k  -> case findMax (filter (< iv) s) of
+                                                 Nothing -> False
+                                                 Just m -> k == m
+
+prop_lookupGT (IS s) iv =         case lookupGT iv s of
+                                    Nothing -> all (<= iv) (toList s)
+                                    Just k  -> case findMin (filter (> iv) s) of
+                                                 Nothing -> False
+                                                 Just m -> k == m
+
+prop_lookupLE (IS s) iv =         case lookupLE iv s of
+                                    Nothing -> all (> iv) (toList s)
+                                    Just k  -> case findMax (filter (<= iv) s) of
+                                                 Nothing -> False
+                                                 Just m  -> k == m
+
+prop_lookupGE (IS s) iv =         case lookupGE iv s of
+                                    Nothing -> all (< iv) (toList s)
+                                    Just k  -> case findMin (filter (>= iv) s) of
+                                                 Nothing -> False
+                                                 Just m  -> k == m
+
 prop_deleteMin (IS s) =           let s' = deleteMin s in
                                   valid s' &&
                                   case findMin s of
@@ -234,6 +258,10 @@ main = do
          check prop_findMin "findMin"
          check prop_findMax "findMax"
          check prop_findLast "findLast"
+         check prop_lookupLT "lookupLT"
+         check prop_lookupGT "lookupGT"
+         check prop_lookupLE "lookupLE"
+         check prop_lookupGE "lookupGE"
          check prop_deleteMin "deleteMin"
          check prop_deleteMax "deleteMax"
          check prop_minView "minView"

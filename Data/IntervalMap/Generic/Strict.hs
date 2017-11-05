@@ -65,6 +65,10 @@ module Data.IntervalMap.Generic.Strict (
             , notMember
             , lookup
             , findWithDefault
+            , lookupLT
+            , lookupGT
+            , lookupLE
+            , lookupGE
 
             -- ** Interval query
             , containing

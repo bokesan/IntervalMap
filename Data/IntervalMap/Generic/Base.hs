@@ -60,6 +60,10 @@ module Data.IntervalMap.Generic.Base (
             , notMember
             , lookup
             , findWithDefault
+            , lookupLT
+            , lookupGT
+            , lookupLE
+            , lookupGE
 
             -- ** Interval query
             , containing
@@ -381,6 +385,62 @@ findWithDefault :: Ord k => a -> k -> IntervalMap k a -> a
 findWithDefault def k m = case lookup k m of
     Nothing -> def
     Just x  -> x
+
+-- | /O(log n)/. Find the largest key smaller than the given one
+-- and return it along with its value.
+lookupLT :: (Ord k) => k -> IntervalMap k v -> Maybe (k,v)
+lookupLT k m = go m
+  where
+    go Nil = Nothing
+    go (Node _ key _ v l r) | k <= key  = go l
+                            | otherwise = go1 key v r
+    go1 rk rv Nil = Just (rk,rv)
+    go1 rk rv (Node _ key _ v l r) | k <= key  = go1 rk rv l
+                                   | otherwise = go1 key v r
+
+-- | /O(log n)/. Find the smallest key larger than the given one
+-- and return it along with its value.
+lookupGT :: (Ord k) => k -> IntervalMap k v -> Maybe (k,v)
+lookupGT k m = go m
+  where
+    go Nil = Nothing
+    go (Node _ key _ v l r) | k >= key  = go r
+                            | otherwise = go1 key v l
+    go1 rk rv Nil = Just (rk,rv)
+    go1 rk rv (Node _ key _ v l r) | k >= key  = go1 rk rv r
+                                   | otherwise = go1 key v l
+
+-- | /O(log n)/. Find the largest key equal to or smaller than the given one
+-- and return it along with its value.
+lookupLE :: (Ord k) => k -> IntervalMap k v -> Maybe (k,v)
+lookupLE k m = go m
+  where
+    go Nil = Nothing
+    go (Node _ key _ v l r) = case compare k key of
+                                LT -> go l
+                                EQ -> Just (key,v)
+                                GT -> go1 key v r
+    go1 rk rv Nil = Just (rk,rv)
+    go1 rk rv (Node _ key _ v l r) = case compare k key of
+                                       LT -> go1 rk rv l
+                                       EQ -> Just (key,v)
+                                       GT -> go1 key v r
+
+-- | /O(log n)/. Find the smallest key larger than the given one
+-- and return it along with its value.
+lookupGE :: (Ord k) => k -> IntervalMap k v -> Maybe (k,v)
+lookupGE k m = go m
+  where
+    go Nil = Nothing
+    go (Node _ key _ v l r) = case compare k key of
+                                LT -> go1 key v l
+                                EQ -> Just (key,v)
+                                GT -> go r
+    go1 rk rv Nil = Just (rk,rv)
+    go1 rk rv (Node _ key _ v l r) = case compare k key of
+                                       LT -> go1 key v l
+                                       EQ -> Just (key,v)
+                                       GT -> go1 rk rv r
 
 -- | Return the submap of key intervals containing the given point.
 -- This is the second element of the value of 'splitAt':

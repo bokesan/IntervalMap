@@ -30,6 +30,10 @@ module Data.IntervalMap.Lazy (
             , notMember
             , lookup
             , findWithDefault
+            , lookupLT
+            , lookupGT
+            , lookupLE
+            , lookupGE
 
             -- ** Interval query
             , containing

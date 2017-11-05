@@ -54,6 +54,10 @@ module Data.IntervalSet (
             , size
             , member
             , notMember
+            , lookupLT
+            , lookupGT
+            , lookupLE
+            , lookupGE
 
             -- ** Interval query
             , containing
@@ -264,6 +268,59 @@ member k (Node _ key _ l r) = case compare k key of
 -- | /O(log n)/. Does the set not contain the given value? See also 'member'.
 notMember :: (Ord k) => k -> IntervalSet k -> Bool
 notMember key tree = not (member key tree)
+
+
+-- | /O(log n)/. Find the largest key smaller than the given one.
+lookupLT :: (Ord k) => k -> IntervalSet k -> Maybe k
+lookupLT k m = go m
+  where
+    go Nil = Nothing
+    go (Node _ key _ l r) | k <= key  = go l
+                          | otherwise = go1 key r
+    go1 rk Nil = Just rk
+    go1 rk (Node _ key _ l r) | k <= key  = go1 rk l
+                              | otherwise = go1 key r
+
+-- | /O(log n)/. Find the smallest key larger than the given one.
+lookupGT :: (Ord k) => k -> IntervalSet k -> Maybe k
+lookupGT k m = go m
+  where
+    go Nil = Nothing
+    go (Node _ key _ l r) | k >= key  = go r
+                          | otherwise = go1 key l
+    go1 rk Nil = Just rk
+    go1 rk (Node _ key _ l r) | k >= key  = go1 rk r
+                              | otherwise = go1 key l
+
+-- | /O(log n)/. Find the largest key equal to or smaller than the given one.
+lookupLE :: (Ord k) => k -> IntervalSet k -> Maybe k
+lookupLE k m = go m
+  where
+    go Nil = Nothing
+    go (Node _ key _ l r) = case compare k key of
+                              LT -> go l
+                              EQ -> Just key
+                              GT -> go1 key r
+    go1 rk Nil = Just rk
+    go1 rk (Node _ key _ l r) = case compare k key of
+                                  LT -> go1 rk l
+                                  EQ -> Just key
+                                  GT -> go1 key r
+
+-- | /O(log n)/. Find the smallest key equal to or larger than the given one.
+lookupGE :: (Ord k) => k -> IntervalSet k -> Maybe k
+lookupGE k m = go m
+  where
+    go Nil = Nothing
+    go (Node _ key _ l r) = case compare k key of
+                              LT -> go1 key l
+                              EQ -> Just key
+                              GT -> go r
+    go1 rk Nil = Just rk
+    go1 rk (Node _ key _ l r) = case compare k key of
+                                  LT -> go1 key l
+                                  EQ -> Just key
+                                  GT -> go1 rk r
 
 -- | Return the set of all intervals containing the given point.
 -- This is the second element of the value of 'splitAt':
