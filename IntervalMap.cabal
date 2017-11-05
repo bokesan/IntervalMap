@@ -1,5 +1,5 @@
 Name:                IntervalMap
-Version:             0.5.3.0
+Version:             0.5.3.1
 Stability:           experimental
 Synopsis:            Containers for intervals, with efficient search.
 Homepage:            http://www.chr-breitkopf.de/comp/IntervalMap
@@ -25,10 +25,6 @@ extra-source-files:
   bench/*.hs
   examples/*.lhs
 
-Flag HPC
-  Description: Enable HPC test coverage support
-  Default:     False
-
 Library
   Exposed-modules:     Data.IntervalMap, Data.IntervalMap.Lazy,
                        Data.IntervalMap.Strict, Data.IntervalMap.Interval,
@@ -48,10 +44,7 @@ Test-Suite TestInterval
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
-  if flag(HPC)
-    ghc-options:        -with-rtsopts=-K1K -fhpc
-  else
-    ghc-options:        -with-rtsopts=-K1K
+  ghc-options:        -with-rtsopts=-K1K
   
 
 Test-Suite TestGenericInterval
@@ -60,10 +53,7 @@ Test-Suite TestGenericInterval
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
-  if flag(HPC)
-    ghc-options:        -with-rtsopts=-K1K -fhpc
-  else
-    ghc-options:        -with-rtsopts=-K1K
+  ghc-options:        -with-rtsopts=-K1K
 
 Test-Suite TestIntervalMap
   type:               exitcode-stdio-1.0
@@ -71,10 +61,7 @@ Test-Suite TestIntervalMap
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
-  if flag(HPC)
-    ghc-options:        -with-rtsopts=-K1K -fhpc
-  else
-    ghc-options:        -with-rtsopts=-K1K
+  ghc-options:        -with-rtsopts=-K1K
 
 Test-Suite TestIntervalSet
   type:               exitcode-stdio-1.0
@@ -82,10 +69,7 @@ Test-Suite TestIntervalSet
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
-  if flag(HPC)
-    ghc-options:        -with-rtsopts=-K1K -fhpc
-  else
-    ghc-options:        -with-rtsopts=-K1K
+  ghc-options:        -with-rtsopts=-K1K
 
 benchmark bench-all
   type:               exitcode-stdio-1.0
