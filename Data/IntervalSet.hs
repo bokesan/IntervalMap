@@ -1,6 +1,6 @@
 -- |
 -- Module      :  Data.IntervalSet
--- Copyright   :  (c) Christoph Breitkopf 2015
+-- Copyright   :  (c) Christoph Breitkopf 2015 - 2017
 -- License     :  BSD-style
 -- Maintainer  :  chbreitkopf@gmail.com
 -- Stability   :  experimental
@@ -133,14 +133,13 @@ module Data.IntervalSet (
 
             ) where
 
-import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
+import Prelude hiding (null, map, filter, foldr, foldl, splitAt)
 import Data.Bits (shiftR, (.&.))
 import Data.Monoid (Monoid(..))
 import qualified Data.Foldable as Foldable
 import qualified Data.List as L
 import Control.DeepSeq
 import Control.Applicative ((<|>))
-import qualified Data.Foldable as Foldable
 
 import Data.IntervalMap.Generic.Interval
 
@@ -219,7 +218,7 @@ mNode :: (Interval k e) => Color -> k -> IntervalSet k -> IntervalSet k -> Inter
 mNode c k l r = Node c k (maxUpper k l r) l r
 
 maxUpper :: (Interval i k) => i -> IntervalSet i -> IntervalSet i -> i
-maxUpper k Nil              Nil              = k `seq` k
+maxUpper k Nil              Nil              = k
 maxUpper k Nil              (Node _ _ m _ _) = maxByUpper k m
 maxUpper k (Node _ _ m _ _) Nil              = maxByUpper k m
 maxUpper k (Node _ _ l _ _) (Node _ _ r _ _) = maxByUpper k (maxByUpper l r)
@@ -642,10 +641,10 @@ ascListIntersection xs@(xk:xs') ys@(yk:ys') =
 
 -- | /O(n)/. The list of all values contained in the set, in ascending order.
 toAscList :: IntervalSet k -> [k]
-toAscList m = foldr (\k r -> k : r) [] m
+toAscList set = toAscList' set []
 
 toAscList' :: IntervalSet k -> [k] -> [k]
-toAscList' m xs = foldr (\k r -> k : r) xs m
+toAscList' m xs = foldr (:) xs m
 
 
 
@@ -658,12 +657,12 @@ toList s = go s []
 
 -- | /O(n)/. The list of all values in the set, in descending order.
 toDescList :: IntervalSet k -> [k]
-toDescList m = foldl (\r k -> k : r) [] m
+toDescList m = foldl (flip (:)) [] m
 
 -- | /O(n log n)/. Build a set from a list of elements. See also 'fromAscList'.
 -- If the list contains duplicate values, the last value is retained.
 fromList :: (Interval k e, Ord k) => [k] -> IntervalSet k
-fromList xs = L.foldl' (\m k -> insert k m) empty xs
+fromList xs = L.foldl' (flip insert) empty xs
 
 -- | /O(n)/. Build a set from an ascending list in linear time.
 -- /The precondition (input list is ascending) is not checked./
@@ -772,7 +771,7 @@ split x m = (l, r)
 splitMember :: (Interval i k, Ord i) => i -> IntervalSet i -> (IntervalSet i, Bool, IntervalSet i)
 splitMember x s = case span (< x) (toAscList s) of
                     ([], [])                    -> (empty, False, empty)
-                    ([], (y:_))     | y == x    -> (empty, True, deleteMin s)
+                    ([], y:_)       | y == x    -> (empty, True, deleteMin s)
                                     | otherwise -> (empty, False, s)
                     (_, [])                     -> (s, False, empty)
                     (lt, ge@(y:gt)) | y == x    -> (fromDistinctAscList lt, True, fromDistinctAscList gt)
@@ -934,9 +933,8 @@ valid mp = test mp && height mp <= maxHeight (size mp) && validColor mp
                                       ld -> if ld < 0 then ld
                                             else
                                               case blackDepth r of
-                                                rd -> if rd < 0 then rd
-                                                      else if rd /= ld then -1
-                                                      else if c == R && (isRed l || isRed r) then -1
-                                                      else if c == B then rd + 1
-                                                      else rd
+                                                rd | rd < 0       -> rd
+                                                   | rd /= ld || (c == R && (isRed l || isRed r)) -> -1
+                                                   | c == B       -> rd + 1
+                                                   | otherwise    -> rd
 
