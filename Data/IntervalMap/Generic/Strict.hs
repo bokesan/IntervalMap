@@ -196,7 +196,7 @@ module Data.IntervalMap.Generic.Strict (
 
 import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
 import qualified Data.List as L
-import Data.Maybe
+import Data.Maybe (fromMaybe)
 import Data.IntervalMap.Generic.Base as M hiding (
       singleton
     , insert
