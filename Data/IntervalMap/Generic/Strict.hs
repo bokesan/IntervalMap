@@ -196,6 +196,7 @@ module Data.IntervalMap.Generic.Strict (
 
 import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
 import qualified Data.List as L
+import Data.Maybe
 import Data.IntervalMap.Generic.Base as M hiding (
       singleton
     , insert
@@ -250,9 +251,7 @@ singleton k v = v `seq` Node B k k v Nil Nil
 -- > findWithDefault 'x' 1 (fromList [(5,'a'), (3,'b')]) == 'x'
 -- > findWithDefault 'x' 5 (fromList [(5,'a'), (3,'b')]) == 'a'
 findWithDefault :: Ord k => a -> k -> IntervalMap k a -> a
-findWithDefault def k m = def `seq` case M.lookup k m of
-    Nothing -> def
-    Just x  -> x
+findWithDefault def k m = def `seq` fromMaybe def (M.lookup k m)
 
 -- | /O(log n)/. Insert a new key/value pair. If the map already contains the key, its value is
 -- changed to the new value.

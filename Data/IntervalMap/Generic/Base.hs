@@ -200,7 +200,7 @@ module Data.IntervalMap.Generic.Base (
             ) where
 
 import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromMaybe, fromJust)
 import Data.Bits (shiftR, (.&.))
 import Data.Monoid (Monoid(..))
 import Control.Applicative (Applicative(..), (<$>), (<|>))
@@ -222,9 +222,7 @@ infixl 9 !,\\ --
 -- Use 'lookup' or 'findWithDefault' instead of this function, unless you are absolutely
 -- sure that the key is present in the map.
 (!) :: (Interval k e, Ord k) => IntervalMap k v -> k -> v
-tree ! key = case lookup key tree of
-               Just v  -> v
-               Nothing -> error "IntervalMap.!: key not found"
+tree ! key = fromMaybe (error "IntervalMap.!: key not found") (lookup key tree)
 
 -- | Same as 'difference'.
 (\\) :: (Interval k e, Ord k) => IntervalMap k a -> IntervalMap k b -> IntervalMap k a
@@ -302,7 +300,7 @@ mNode :: (Interval k e) => Color -> k -> v -> IntervalMap k v -> IntervalMap k v
 mNode c k v l r = Node c k (maxUpper k l r) v l r
 
 maxUpper :: (Interval i k) => i -> IntervalMap i v -> IntervalMap i v -> i
-maxUpper k Nil                Nil                = k `seq` k
+maxUpper k Nil                Nil                = k
 maxUpper k Nil                (Node _ _ m _ _ _) = maxByUpper k m
 maxUpper k (Node _ _ m _ _ _) Nil                = maxByUpper k m
 maxUpper k (Node _ _ l _ _ _) (Node _ _ r _ _ _) = maxByUpper k (maxByUpper l r)
@@ -382,9 +380,7 @@ lookup k (Node _ key _ v l r) = case compare k key of
 -- the value at key @k@ or returns default value @def@
 -- when the key is not in the map.
 findWithDefault :: Ord k => a -> k -> IntervalMap k a -> a
-findWithDefault def k m = case lookup k m of
-    Nothing -> def
-    Just x  -> x
+findWithDefault def k m = fromMaybe def (lookup k m)
 
 -- | /O(log n)/. Find the largest key smaller than the given one
 -- and return it along with its value.
@@ -1243,7 +1239,7 @@ split x m = (l, r)
 splitLookup :: (Interval i k, Ord i) => i -> IntervalMap i a -> (IntervalMap i a, Maybe a, IntervalMap i a)
 splitLookup x m = case span (\(k,_) -> k < x) (toAscList m) of
                     ([], [])                        -> (empty, Nothing, empty)
-                    ([], ((k,v):_))     | k == x    -> (empty, Just v, deleteMin m)
+                    ([], (k,v):_)       | k == x    -> (empty, Just v, deleteMin m)
                                         | otherwise -> (empty, Nothing, m)
                     (_, [])                         -> (m, Nothing, empty)
                     (lt, ge@((k,v):gt)) | k == x    -> (fromDistinctAscList lt, Just v, fromDistinctAscList gt)
@@ -1391,9 +1387,8 @@ valid mp = test mp && height mp <= maxHeight (size mp) && validColor mp
                                       ld -> if ld < 0 then ld
                                             else
                                               case blackDepth r of
-                                                rd -> if rd < 0 then rd
-                                                      else if rd /= ld then -1
-                                                      else if c == R && (isRed l || isRed r) then -1
-                                                      else if c == B then rd + 1
-                                                      else rd
+                                                rd | rd < 0    -> rd
+                                                   | rd /= ld || (c == R && (isRed l || isRed r)) -> -1
+                                                   | c == B    -> rd + 1
+                                                   | otherwise -> rd
 
