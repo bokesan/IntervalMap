@@ -7,7 +7,6 @@ import System.Exit (exitSuccess, exitFailure)
 
 import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
-import Control.Monad (liftM)
 
 import Data.IntervalMap.Generic.Interval
 
@@ -103,7 +102,7 @@ newtype II = II (IV Int) deriving (Show)
 
 instance Arbitrary II where
   arbitrary = do x <- arbitrary
-		 liftM II (interval (abs x))
+                 fmap II (interval (abs x))
 
 interval x = do
 	     y <- sized (\n -> choose (x, x + abs n))
@@ -131,8 +130,8 @@ prop_overlaps_symmetric (II i1) (II i2) = (i1 `overlaps` i2) == (i2 `overlaps` i
 
 prop_compare1 (II i1) (II i2) =
   case compare (lowerBound i1) (lowerBound i2) of
-    LT -> compare i1 i2 == LT
-    GT -> compare i1 i2 == GT
+    LT -> i1 < i2
+    GT -> i1 > i2
     EQ -> True
 
 prop_contains (II i) p =

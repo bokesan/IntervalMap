@@ -4,7 +4,7 @@
 import Weigh
 
 import Control.DeepSeq
-import Prelude hiding (lookup, max, foldr)
+import Prelude hiding (max)
 import System.Random
 import Data.Foldable (foldr)
 
@@ -23,7 +23,7 @@ ensure xs = xs `deepseq` return xs
 
 forceRange :: Int -> Int -> Int -> Int
 forceRange lo hi n | n >= lo && n <= hi = n
-                   | n < 0              = forceRange lo hi (0 - n)
+                   | n < 0              = forceRange lo hi (negate n)
                    | otherwise          = lo + (n `rem` (1 + hi - lo))
 
 genRandomIntervals :: Int -> Int -> Int -> [(Int,Int)]
@@ -54,12 +54,12 @@ main =
   do
       let ivs  = genRandomIntervals cDATA_SIZE 50 cDATA_SIZE
       let n = show cDATA_SIZE
-      ivsP   <- ensure $ [IV lo hi | (lo,hi) <- ivs]
+      ivsP   <- ensure [IV lo hi | (lo,hi) <- ivs]
       cS     <- ensure $ C.fromList ivsP
       sS     <- ensure $ S.fromList ivsP
       oIvsP  <- ensure $ C.toAscList cS
       let m = show (length oIvsP)
-      kvs    <- ensure $ [(iv, lowerBound iv) | iv <- ivsP]
+      kvs    <- ensure [(iv, lowerBound iv) | iv <- ivsP]
       cMap   <- ensure $ M.fromList kvs
       ivMap  <- ensure $ IVM.fromList kvs
       oKvs   <- ensure $ M.toAscList cMap

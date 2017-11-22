@@ -4,8 +4,9 @@ import System.Exit (exitSuccess, exitFailure)
 
 import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
-import Data.List ((\\), sort, sortBy)
-import Control.Monad (liftM, foldM)
+import Data.List ((\\), sort, sortBy, minimumBy)
+import Data.Maybe (isNothing)
+import Control.Monad (foldM)
 
 import Data.IntervalMap as M
 import Data.IntervalMap.Interval
@@ -16,7 +17,7 @@ newtype II = II (Interval Int) deriving (Eq, Ord, Show)
 
 instance Arbitrary II where
   arbitrary = do x <- arbitrary
-                 liftM II (interval (abs x))
+                 fmap II (interval (abs x))
 
 interval :: Int -> Gen (Interval Int)
 interval x = do
@@ -45,7 +46,7 @@ prop_tests1 =
   1 == M.height single46 &&
   Just "single46" == M.lookup (ClosedInterval 4 6) single46 &&
   "single46" == single46 M.! ClosedInterval 4 6 &&
-  Nothing == M.lookup (OpenInterval 4 6) single46 &&
+  isNothing (M.lookup (OpenInterval 4 6) single46) &&
   single46 == single46 `containing` 5
 
 
@@ -64,7 +65,7 @@ prop_tests2 =
   "14" == bal3 M.! ClosedInterval 1 4 &&
   "58" == bal3 M.! ClosedInterval 5 8 &&
   "o58" == bal3' M.! OpenInterval 5 8 &&
-  Nothing == M.lookup (OpenInterval 5 8) bal3 &&
+  isNothing (M.lookup (OpenInterval 5 8) bal3) &&
   Just "o58" == M.lookup (OpenInterval 5 8) bal3' &&
   M.null (bal3 `containing` 0) &&
   M.null (bal3 `containing` 9) &&
@@ -91,11 +92,11 @@ deep100R = construct 1 M.empty
 
 
 prop_tests3 =
-   68 == deep100L M.! (ClosedInterval 68 68) &&
+   68 == deep100L M.! ClosedInterval 68 68 &&
    [17] == Prelude.map snd (toAscList (deep100L `containing` 17)) &&
    100 == M.size deep100L &&
    (M.height deep100L <= 12) &&
-   68 == deep100R M.! (ClosedInterval 68 68) &&
+   68 == deep100R M.! ClosedInterval 68 68 &&
    [17] == Prelude.map snd (toAscList (deep100R `containing` 17)) &&
    100 == M.size deep100R &&
    (M.height deep100R <= 12) &&
@@ -276,20 +277,20 @@ prop_findMax (IMI m) = not (M.null m) ==> let x = maximum (M.toList m)
                                              sameElements (M.toList m Data.List.\\ [x]) (M.toList (M.deleteMax m))
 
 prop_findLast (IMI m) = not (M.null m) ==>
-                         M.findLast m == head (sortBy cmp (M.toList m))
+                         M.findLast m == minimumBy cmp (M.toList m)
                         where cmp (a,_) (b,_) = invert (compareByUpper a b)
                               invert LT = GT
                               invert GT = LT
                               invert EQ = EQ
 
 
-prop_insertWith (IMI m) (II i) v = let m' = M.insertWith (\new old -> new + old) i v m in
+prop_insertWith (IMI m) (II i) v = let m' = M.insertWith (+) i v m in
                                    if M.member i m then
                                       M.valid m' && m' M.! i == m M.! i + v && M.size m' == M.size m
                                    else
                                       M.valid m' && m' M.! i == v && M.size m' == M.size m + 1
 
-prop_insertWith' (IMI m) (II i) v = let m' = M.insertWith' (\new old -> new + old) i v m in
+prop_insertWith' (IMI m) (II i) v = let m' = M.insertWith' (+) i v m in
                                     if M.member i m then
                                        M.valid m' && m' M.! i == m M.! i + v && M.size m' == M.size m
                                     else
@@ -318,14 +319,14 @@ prop_adjust (II i) (IMI m) = let m' = M.adjust (13*) i m in
                                            Nothing -> False
                                            Just v' -> v' == v * 13
 
-prop_update (II i) (IMI m) = let f n = if n `rem` 2 == 0 then Nothing else Just (13 * n)
+prop_update (II i) (IMI m) = let f n = if even n then Nothing else Just (13 * n)
                                  m' = M.update f i m
                              in
                                  M.valid m' &&
                                  case M.lookup i m of
                                    Nothing -> m == m'
                                    Just v -> case M.lookup i m' of
-                                               Nothing -> v `rem` 2 == 0
+                                               Nothing -> even v
                                                Just v' -> v' == 13 * v
 
 prop_alter (IMI m) (II k) = delete && insert

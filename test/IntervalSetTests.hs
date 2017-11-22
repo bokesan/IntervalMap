@@ -32,8 +32,7 @@ combine i1@(II a b) i2@(II c d) | i1 `overlaps` i2 = Just (II (min a c) (max b d
 
 instance Arbitrary II where
   arbitrary = do x <- arbitrary
-                 iv <- interval (abs x)
-                 return iv
+                 interval (abs x)
 
 interval :: Int -> Gen II
 interval x = do y <- sized (\n -> choose (x, x + abs n))
@@ -207,10 +206,10 @@ prop_within (IS s) iv =           let s' = s `within` iv in
                                   valid s' &&
                                   all (\e -> if iv `subsumes` e then e `member` s' else e `notMember` s') (toList s)
                                   
-prop_foldr  (IS s) iv =           Just (foldr  (\v r -> min v r) iv s) == findMin (insert iv s)
-prop_foldr' (IS s) iv =           Just (foldr' (\v r -> min v r) iv s) == findMin (insert iv s)
-prop_foldl  (IS s) iv =           Just (foldl  (\r v -> min v r) iv s) == findMin (insert iv s)
-prop_foldl' (IS s) iv =           Just (foldl' (\r v -> min v r) iv s) == findMin (insert iv s)
+prop_foldr  (IS s) iv =           Just (foldr  min iv s) == findMin (insert iv s)
+prop_foldr' (IS s) iv =           Just (foldr' min iv s) == findMin (insert iv s)
+prop_foldl  (IS s) iv =           Just (foldl  min iv s) == findMin (insert iv s)
+prop_foldl' (IS s) iv =           Just (foldl' min iv s) == findMin (insert iv s)
 
 prop_flattenWithMonotonic (IS s) = let s' = flattenWithMonotonic combine s in
                                    valid s' &&

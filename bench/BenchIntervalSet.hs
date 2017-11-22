@@ -22,7 +22,7 @@ ensure xs = xs `deepseq` return xs
 
 forceRange :: Int -> Int -> Int -> Int
 forceRange lo hi n | n >= lo && n <= hi = n
-                   | n < 0              = forceRange lo hi (0 - n)
+                   | n < 0              = forceRange lo hi (negate n)
                    | otherwise          = lo + (n `rem` (1 + hi - lo))
 
 genRandomInts :: Int -> Int -> Int -> [Int]
@@ -62,7 +62,7 @@ main :: IO ()
 main =
   do
       let ivs  = genRandomIntervals cDATA_SIZE 50 cDATA_SIZE
-      ivsP   <- ensure $ [IV lo hi | (lo,hi) <- ivs]
+      ivsP   <- ensure [IV lo hi | (lo,hi) <- ivs]
       oIvsP  <- ensure $ sort ivsP
       let lookupKeys = ivsP
       set <- ensure $ S.fromList ivsP

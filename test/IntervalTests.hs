@@ -4,7 +4,6 @@ import System.Exit (exitSuccess, exitFailure)
 
 import Test.QuickCheck
 import Test.QuickCheck.Test (isSuccess)
-import Control.Monad (liftM)
 import Data.List (maximumBy)
 import Data.Maybe
 
@@ -83,7 +82,7 @@ newtype II = II (Interval Int) deriving (Show)
 
 instance Arbitrary II where
   arbitrary = do x <- arbitrary
-                 liftM II (interval (abs x))
+                 fmap II (interval (abs x))
 
 interval x = do
              y <- sized (\n -> choose (x, x + abs n))
@@ -111,8 +110,8 @@ prop_overlaps_symmetric (II i1) (II i2) = (i1 `overlaps` i2) == (i2 `overlaps` i
 
 prop_compare1 (II i1) (II i2) =
   case compare (lowerBound i1) (lowerBound i2) of
-    LT -> compare i1 i2 == LT
-    GT -> compare i1 i2 == GT
+    LT -> i1 < i2
+    GT -> i1 > i2
     EQ -> True
 
 prop_compare_openness_closedness_lower_bound (II i1) (II i2) =
@@ -144,7 +143,7 @@ prop_combine_reflexive (II i) =
   in maybeTest (i ==) (combine i i)
 
 prop_combine_overlapping (II a) (II b) =
-  (isJust (combine a b)) === (a `overlaps` b)
+  isJust (combine a b) === (a `overlaps` b)
 
 prop_combine_bounds (II a) (II b) =
   case combine a b of
