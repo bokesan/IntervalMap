@@ -44,11 +44,17 @@ instance Arbitrary IS where
   arbitrary = do xs <- orderedList
                  return (IS (fromAscList xs))
 
+ivsDisjoint :: [II] -> Bool
+ivsDisjoint [] = True
+ivsDisjoint (x:xs) = not (L.any (overlaps x) xs) && ivsDisjoint xs
+
 prop_valid (IS s) =               valid s
 
 prop_null (IS s) =                null s == (size s == 0)
 
 prop_size (IS s) =                size s == length (toList s)
+
+prop_disjoint (IS s) =            disjoint s == ivsDisjoint (toList s)
 
 prop_singleton :: II -> Bool
 prop_singleton iv =               size (singleton iv) == 1
@@ -239,6 +245,7 @@ main = do
          check prop_valid "valid"
          check prop_null "null"
          check prop_size "size"
+         check prop_disjoint "disjoint"
          check prop_notMember "notMember"
          check prop_singleton "singleton"
          check prop_isSubsetOf "subsetOf"

@@ -52,6 +52,7 @@ module Data.IntervalSet (
             -- * Query
             , null
             , size
+            , disjoint
             , member
             , notMember
             , lookupLT
@@ -154,7 +155,7 @@ m1 \\ m2 = difference m1 m2
 
 
 -- | The Color of a tree node.
-data Color = R | B deriving (Eq)
+data Color = R | RD | B | BD deriving (Eq)
 
 -- | A set of intervals of type @k@.
 data IntervalSet k = Nil
@@ -202,15 +203,18 @@ instance (Show k) => Show (IntervalSet k) where
 
 isRed :: IntervalSet k -> Bool
 isRed (Node R _ _ _ _) = True
+isRed (Node RD _ _ _ _) = True
 isRed _ = False
 
 turnBlack :: IntervalSet k -> IntervalSet k
 turnBlack (Node R k m l r) = Node B k m l r
+turnBlack (Node RD k m l r) = Node BD k m l r
 turnBlack t = t
 
 turnRed :: IntervalSet k -> IntervalSet k
 turnRed Nil = error "turnRed: Leaf"
 turnRed (Node B k m l r) = Node R k m l r
+turnRed (Node BD k m l r) = Node RD k m l r
 turnRed t = t
 
 -- construct node, recomputing the upper key bound.
@@ -238,7 +242,7 @@ empty =  Nil
 
 -- | /O(1)/. A set with one entry.
 singleton :: k -> IntervalSet k
-singleton k = Node B k k Nil Nil
+singleton k = Node BD k k Nil Nil
 
 
 -- | /O(1)/. Is the set empty?
@@ -255,6 +259,16 @@ size t = h 0 t
     h n s = n `seq` case s of
                       Nil -> n
                       Node _ _ _ l r -> h (h n l + 1) r
+
+isDisjoint :: Color -> Bool
+isDisjoint RD = True
+isDisjoint BD = True
+isDisjoint _  = False
+
+-- | /O(1)/. Are all intervals in the set disjoint?
+disjoint :: IntervalSet k -> Bool
+disjoint Nil = True
+disjoint (Node color _ _ _ _) = isDisjoint color
 
 -- | /O(log n)/. Does the set contain the given value? See also 'notMember'.
 member :: (Ord k) => k -> IntervalSet k -> Bool
@@ -332,10 +346,10 @@ containing :: (Interval k e) => IntervalSet k -> e -> IntervalSet k
 t `containing` p = p `seq` fromDistinctAscList (go [] t)
   where
     go xs Nil = xs
-    go xs (Node _ k m l r)
+    go xs (Node c k m l r)
        | p `above` m  =  xs         -- above all intervals in the tree: no result
        | p `below` k  =  go xs l    -- to the left of the lower bound: can't be in right subtree
-       | p `inside` k =  go (k : go xs r) l
+       | p `inside` k =  if isDisjoint c then (k:xs) else go (k : go xs r) l
        | otherwise    =  go (go xs r) l
 
 -- | Return the set of all intervals overlapping (intersecting) the given interval.
