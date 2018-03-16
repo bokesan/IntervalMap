@@ -202,6 +202,7 @@ module Data.IntervalMap.Generic.Base (
 import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
 import Data.Maybe (fromMaybe, fromJust)
 import Data.Bits (shiftR, (.&.))
+import qualified Data.Semigroup as Sem
 import Data.Monoid (Monoid(..))
 import Control.Applicative (Applicative(..), (<$>), (<|>))
 import Data.Traversable (Traversable(traverse))
@@ -248,6 +249,9 @@ instance (Ord k, Ord v) => Ord (IntervalMap k v) where
 
 instance Functor (IntervalMap k) where
   fmap f m  = map f m
+
+instance (Interval i k, Ord i) => Sem.Semigroup (IntervalMap i v) where
+  (<>) = union
 
 instance (Interval i k, Ord i) => Monoid (IntervalMap i v) where
     mempty  = empty

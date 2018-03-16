@@ -1,3 +1,5 @@
+0.6.0.0  Support ghc 8.4, desupport ghc 7.x
+
 0.5.3.1  Remove HPC flag.
 0.5.3.0  Add lookupLT... functions.
 

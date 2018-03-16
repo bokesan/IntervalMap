@@ -135,6 +135,7 @@ module Data.IntervalSet (
 
 import Prelude hiding (null, map, filter, foldr, foldl, splitAt)
 import Data.Bits (shiftR, (.&.))
+import qualified Data.Semigroup as Sem
 import Data.Monoid (Monoid(..))
 import qualified Data.Foldable as Foldable
 import qualified Data.List as L
@@ -169,6 +170,9 @@ instance (Eq k) => Eq (IntervalSet k) where
 
 instance (Ord k) => Ord (IntervalSet k) where
   compare a b = compare (toAscList a) (toAscList b)
+
+instance (Interval i k, Ord i) => Sem.Semigroup (IntervalSet i) where
+  (<>) = union
 
 instance (Interval i k, Ord i) => Monoid (IntervalSet i) where
     mempty  = empty
