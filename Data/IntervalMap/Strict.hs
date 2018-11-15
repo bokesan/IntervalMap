@@ -184,6 +184,9 @@ module Data.IntervalMap.Strict (
             , findMin
             , findMax
             , findLast
+            , lookupMin
+            , lookupMax
+            , lookupLast
             , deleteMin
             , deleteMax
             , deleteFindMin

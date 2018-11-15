@@ -138,6 +138,9 @@ module Data.IntervalMap.Generic.Lazy (
             , findMin
             , findMax
             , findLast
+            , lookupMin
+            , lookupMax
+            , lookupLast
             , deleteMin
             , deleteMax
             , deleteFindMin

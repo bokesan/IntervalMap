@@ -171,7 +171,10 @@ module Data.IntervalMap.Generic.Base (
             -- * Min\/Max
             , findMin
             , findMax
+            , lookupMin
+            , lookupMax
             , findLast
+            , lookupLast
             , deleteMin
             , deleteMax
             , deleteFindMin
@@ -570,6 +573,18 @@ findMax (Node _ k _ v _ Nil) = (k,v)
 findMax (Node _ _ _ _ _ r) = findMax r
 findMax Nil = error "IntervalMap.findMin: empty map"
 
+-- | /O(log n)/. Returns the smallest key and its associated value.
+lookupMin :: IntervalMap k v -> Maybe (k, v)
+lookupMin (Node _ k _ v Nil _) = Just (k,v)
+lookupMin (Node _ _ _ _ l _) = lookupMin l
+lookupMin Nil = Nothing
+
+-- | /O(log n)/. Returns the largest key and its associated value.
+lookupMax :: IntervalMap k v -> Maybe (k, v)
+lookupMax (Node _ k _ v _ Nil) = Just (k,v)
+lookupMax (Node _ _ _ _ _ r) = lookupMax r
+lookupMax Nil = Nothing
+
 -- | Returns the key with the largest endpoint and its associated value.
 -- If there is more than one key with that endpoint, return the rightmost.
 --
@@ -584,6 +599,22 @@ findLast t@(Node _ _ mx _ _ _) = fromJust (go t)
                                                       else go r <|> go l
                           | otherwise  = Nothing
     sameU a b = compareUpperBounds a b == EQ
+
+-- | Returns the key with the largest endpoint and its associated value.
+-- If there is more than one key with that endpoint, return the rightmost.
+--
+-- /O(n)/, since all keys could have the same endpoint.
+-- /O(log n)/ average case.
+lookupLast :: (Interval k e) => IntervalMap k v -> Maybe (k, v)
+lookupLast Nil = Nothing
+lookupLast t@(Node _ _ mx _ _ _) = go t
+  where
+    go Nil = Nothing
+    go (Node _ k m v l r) | sameU m mx = if sameU k m then go r <|> Just (k,v)
+                                                      else go r <|> go l
+                          | otherwise  = Nothing
+    sameU a b = compareUpperBounds a b == EQ
+
 
 
 -- Type to indicate whether the number of black nodes changed or stayed the same.
