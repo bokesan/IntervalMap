@@ -1,3 +1,4 @@
+0.6.1.1  Improve Semigroup instances.
 0.6.1.0  Add safe versions of find... functions.
 
 0.6.0.0  Support ghc 8.4, desupport ghc 7.x.
