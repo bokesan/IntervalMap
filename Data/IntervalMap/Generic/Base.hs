@@ -255,6 +255,8 @@ instance Functor (IntervalMap k) where
 
 instance (Interval i k, Ord i) => Sem.Semigroup (IntervalMap i v) where
   (<>) = union
+  sconcat = unions . Foldable.toList
+  stimes = Sem.stimesIdempotentMonoid
 
 instance (Interval i k, Ord i) => Monoid (IntervalMap i v) where
     mempty  = empty

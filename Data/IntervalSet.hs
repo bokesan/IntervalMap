@@ -173,6 +173,8 @@ instance (Ord k) => Ord (IntervalSet k) where
 
 instance (Interval i k, Ord i) => Sem.Semigroup (IntervalSet i) where
   (<>) = union
+  sconcat = unions . Foldable.toList
+  stimes = Sem.stimesIdempotentMonoid
 
 instance (Interval i k, Ord i) => Monoid (IntervalSet i) where
     mempty  = empty
