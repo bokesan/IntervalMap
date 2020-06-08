@@ -11,7 +11,7 @@ bug-reports:         mailto:chbreitkopf@gmail.com
 Copyright:           2011-2020 Christoph Breitkopf
 Category:            Data
 Build-type:          Simple
-Cabal-version:       >= 1.8
+Cabal-version:       >= 1.10
 Tested-With:         GHC ==8.0.2, GHC ==8.2.1, GHC ==8.4.1, GHC ==8.6.5, GHC ==8.8.3
 Description:
                      Ordered containers of intervals, with efficient search
@@ -34,6 +34,7 @@ Library
                        Data.IntervalSet
   other-modules:       Data.IntervalMap.Generic.Base
   Build-depends:       base >= 4 && < 5, containers, deepseq
+  default-language:    Haskell2010
   ghc-options: -Wall -fwarn-tabs -Wcompat -Wincomplete-uni-patterns -Wincomplete-record-updates -Wredundant-constraints
 
 Test-Suite TestInterval
@@ -42,6 +43,7 @@ Test-Suite TestInterval
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
+  default-language:    Haskell2010
   ghc-options:        -with-rtsopts=-K1K
   
 
@@ -51,6 +53,7 @@ Test-Suite TestGenericInterval
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
+  default-language:    Haskell2010
   ghc-options:        -with-rtsopts=-K1K
 
 Test-Suite TestIntervalMap
@@ -59,6 +62,7 @@ Test-Suite TestIntervalMap
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
+  default-language:    Haskell2010
   ghc-options:        -with-rtsopts=-K1K
 
 Test-Suite TestIntervalSet
@@ -67,6 +71,7 @@ Test-Suite TestIntervalSet
   hs-source-dirs:     . test
   build-depends:      base >= 4 && < 5, containers, deepseq,
                       QuickCheck, Cabal >= 1.9.2
+  default-language:    Haskell2010
   ghc-options:        -with-rtsopts=-K1K
 
 benchmark bench-all
@@ -76,6 +81,7 @@ benchmark bench-all
   Build-depends:      base >= 4 && < 5,
                       containers, random, deepseq,
                       criterion >= 1.0
+  default-language:    Haskell2010
   ghc-options: -Wall
 
 benchmark bench-generic-lazy-strict
@@ -85,6 +91,7 @@ benchmark bench-generic-lazy-strict
   Build-depends:      base >= 4 && < 5,
                       containers, random, deepseq,
                       criterion >= 1.0
+  default-language:    Haskell2010
   ghc-options: -Wall -with-rtsopts=-K1K
 
 benchmark bench-set
@@ -94,6 +101,7 @@ benchmark bench-set
   Build-depends:      base >= 4 && < 5,
                       containers, random, deepseq,
                       criterion >= 1.0
+  default-language:    Haskell2010
   ghc-options: -Wall -with-rtsopts=-K1K
 
 benchmark weigh-allocs
@@ -103,6 +111,7 @@ benchmark weigh-allocs
   Build-depends:      base >= 4 && < 5,
                       containers, random, deepseq,
                       weigh
+  default-language:    Haskell2010
   ghc-options: -Wall -with-rtsopts=-K1K
 
 benchmark bench-compare-types
@@ -112,6 +121,7 @@ benchmark bench-compare-types
   Build-depends:      base >= 4 && < 5,
                       containers, random, deepseq, fingertree >= 0.1, SegmentTree,
                       criterion >= 1.0
+  default-language:    Haskell2010
   ghc-options: -Wall
 
 benchmark bench-rb-impl
@@ -121,6 +131,7 @@ benchmark bench-rb-impl
   Build-depends:      base >= 4 && < 5,
                       containers, random, deepseq,
                       criterion >= 1.0
+  default-language:    Haskell2010
   ghc-options: -Wall -with-rtsopts=-K1K
 
 source-repository head
