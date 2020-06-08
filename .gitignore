@@ -5,7 +5,8 @@
 *.prof
 *.tix
 .hpc/
-/stack.yaml*
+/stack.yaml
+/stack.yaml.lock
 .stack-work/
 /dist/
 /dist-newstyle/
