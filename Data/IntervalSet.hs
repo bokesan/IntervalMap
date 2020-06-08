@@ -178,7 +178,7 @@ instance (Interval i k, Ord i) => Sem.Semigroup (IntervalSet i) where
 
 instance (Interval i k, Ord i) => Monoid (IntervalSet i) where
     mempty  = empty
-    mappend = union
+    mappend = (Sem.<>)
     mconcat = unions
               
 instance Foldable.Foldable IntervalSet where
@@ -483,7 +483,7 @@ deleteMax' (Node c k _ l r) =
     (S' r' kv) -> annotate (unbalancedL c k l r') kv
 
 -- The left tree lacks one Black node
-unbalancedR :: (Interval k e, Ord k) => Color -> k -> IntervalSet k -> IntervalSet k -> DeleteResult k
+unbalancedR :: (Interval k e) => Color -> k -> IntervalSet k -> IntervalSet k -> DeleteResult k
 -- Decreasing one Black node in the right
 unbalancedR B k l r@(Node B _ _ _ _) = S (balanceR B k l (turnRed r))
 unbalancedR R k l r@(Node B _ _ _ _) = U (balanceR B k l (turnRed r))
@@ -492,7 +492,7 @@ unbalancedR B k l (Node R rk _ rl@(Node B _ _ _ _) rr)
   = U (mNode B rk (balanceR B k l (turnRed rl)) rr)
 unbalancedR _ _ _ _ = error "unbalancedR"
 
-unbalancedL :: (Interval k e, Ord k) => Color -> k -> IntervalSet k -> IntervalSet k -> DeleteResult k
+unbalancedL :: (Interval k e) => Color -> k -> IntervalSet k -> IntervalSet k -> DeleteResult k
 unbalancedL R k l@(Node B _ _ _ _) r = U (balanceL B k (turnRed l) r)
 unbalancedL B k l@(Node B _ _ _ _) r = S (balanceL B k (turnRed l) r)
 unbalancedL B k (Node R lk _ ll lr@(Node B _ _ _ _)) r

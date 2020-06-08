@@ -5,9 +5,10 @@
 *.prof
 *.tix
 .hpc/
-/stack.yaml
+/stack.yaml*
 .stack-work/
 /dist/
 /dist-newstyle/
 /cabal.project.local
 /doc/
+bench*.html
