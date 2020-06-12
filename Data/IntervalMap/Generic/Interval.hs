@@ -15,7 +15,7 @@
 -- Empty intervals, i.e. intervals where 'lowerBound >= upperBound' should be avoided
 -- if possible. If you must use empty intervals, you need to provide implementations
 -- for all operations, as the default implementations do not necessarily work correctly.
--- for example, the default implementation of 'inside' returns 'True' if the point
+-- For example, the default implementation of 'inside' returns 'True' for a point that
 -- is equal to the lowerBound of a left-closed interval even if it is larger than
 -- the upper bound.
 
