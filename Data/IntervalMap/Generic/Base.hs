@@ -225,7 +225,7 @@ infixl 9 !,\\ --
 --
 -- Use 'lookup' or 'findWithDefault' instead of this function, unless you are absolutely
 -- sure that the key is present in the map.
-(!) :: (Interval k e, Ord k) => IntervalMap k v -> k -> v
+(!) :: (Ord k) => IntervalMap k v -> k -> v
 tree ! key = fromMaybe (error "IntervalMap.!: key not found") (lookup key tree)
 
 -- | Same as 'difference'.
@@ -260,7 +260,7 @@ instance (Interval i k, Ord i) => Sem.Semigroup (IntervalMap i v) where
 
 instance (Interval i k, Ord i) => Monoid (IntervalMap i v) where
     mempty  = empty
-    mappend = union
+    mappend = (Sem.<>)
     mconcat = unions
 
 instance Traversable (IntervalMap k) where
@@ -667,7 +667,7 @@ deleteMax' (Node c k _ v l r) =
     (S' r' kv) -> annotate (unbalancedL c k v l r') kv
 
 -- The left tree lacks one Black node
-unbalancedR :: (Interval k e, Ord k) => Color -> k -> v -> IntervalMap k v -> IntervalMap k v -> DeleteResult k v
+unbalancedR :: (Interval k e) => Color -> k -> v -> IntervalMap k v -> IntervalMap k v -> DeleteResult k v
 -- Decreasing one Black node in the right
 unbalancedR B k v l r@(Node B _ _ _ _ _) = S (balanceR B k v l (turnRed r))
 unbalancedR R k v l r@(Node B _ _ _ _ _) = U (balanceR B k v l (turnRed r))
@@ -676,7 +676,7 @@ unbalancedR B k v l (Node R rk _ rv rl@(Node B _ _ _ _ _) rr)
   = U (mNode B rk rv (balanceR B k v l (turnRed rl)) rr)
 unbalancedR _ _ _ _ _ = error "unbalancedR"
 
-unbalancedL :: (Interval k e, Ord k) => Color -> k -> v -> IntervalMap k v -> IntervalMap k v -> DeleteResult k v
+unbalancedL :: (Interval k e) => Color -> k -> v -> IntervalMap k v -> IntervalMap k v -> DeleteResult k v
 unbalancedL R k v l@(Node B _ _ _ _ _) r = U (balanceL B k v (turnRed l) r)
 unbalancedL B k v l@(Node B _ _ _ _ _) r = S (balanceL B k v (turnRed l) r)
 unbalancedL B k v (Node R lk _ lv ll lr@(Node B _ _ _ _ _)) r
