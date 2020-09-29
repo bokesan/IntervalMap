@@ -21,7 +21,6 @@
 
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE UndecidableInstances #-}
 module Data.IntervalMap.Generic.Interval (
     -- * Interval type
     Interval(..),

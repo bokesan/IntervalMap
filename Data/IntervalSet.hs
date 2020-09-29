@@ -37,9 +37,7 @@
 -- The red-black tree deletion is based on code from llrbtree by Kazu Yamamoto.
 -- Of course, any errors are mine.
 --
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
 module Data.IntervalSet (
             -- * re-export
             Interval(..)
