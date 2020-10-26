@@ -429,7 +429,7 @@ lookupLE k m = go m
                                        EQ -> Just (key,v)
                                        GT -> go1 key v r
 
--- | /O(log n)/. Find the smallest key larger than the given one
+-- | /O(log n)/. Find the smallest key equal to or larger than the given one
 -- and return it along with its value.
 lookupGE :: (Ord k) => k -> IntervalMap k v -> Maybe (k,v)
 lookupGE k m = go m
