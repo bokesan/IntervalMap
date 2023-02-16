@@ -19,18 +19,18 @@ instance Arbitrary II where
   arbitrary = do x <- arbitrary
                  fmap II (interval (abs x))
 
+-- In contrast to the other test suites, this will generate empty intervals, too
 interval :: Int -> Gen (Interval Int)
 interval x = do
-             y <- sized (\n -> choose (x, x + abs n))
-             if x == y then return (ClosedInterval x y)
-                else oneof [return (ClosedInterval x y),
-                            return (OpenInterval x y),
-                            return (IntervalCO x y),
-                            return (IntervalOC x y)]
+             y <- sized (\n -> choose (x, x + n))
+             oneof [return (ClosedInterval x y),
+                    return (OpenInterval x y),
+                    return (IntervalCO x y),
+                    return (IntervalOC x y)]
 
 instance Arbitrary IMI where
   arbitrary = do xs <- orderedList
-                 return (IMI (fromAscList [(v, lowerBound v) | (II v) <- xs]))
+                 return (IMI (fromAscList [(v, lowerBound v) | (II v) <- xs, not (isEmpty v)]))
 
 
 emptyM, single46 :: M.IntervalMap Int String
@@ -78,6 +78,9 @@ prop_tests2 =
   sameElements ["58", "single46"] [v|(_,v) <- toAscList (bal3 `containing` 6)] &&
   sameElements ["single46"] [v|(_,v) <- toAscList (bal3' `containing` 5)] &&
   sameElements ["o58", "single46"] [v|(_,v) <- toAscList (bal3' `containing` 6)]
+
+prop_intersectingEmpty =
+  M.null (M.intersecting (M.fromList [(IntervalCO 0 2, "0_2")]) (IntervalCO 1 1))
 
 
 deep100L :: M.IntervalMap Int Int
@@ -454,11 +457,12 @@ prop_splitAt p (IMI m) =          let (lo,c,hi) = M.splitAt m p in
 prop_splitIntersecting (II i) (IMI m) =
                                   let (lo,c,hi) = M.splitIntersecting m i in
                                   M.valid lo && M.valid c && M.valid hi &&
-                                  lo == mfilter (i `after`) m &&
-                                  c  == mfilter (i `overlaps`) m &&
-                                  hi == mfilter (i `before`) m &&
                                   M.unions [lo,c,hi] == m &&
-                                  M.size lo + M.size c + M.size hi == M.size m
+                                  c == mfilter (i `overlaps`) m &&
+                                  (isEmpty i || (
+                                    lo == mfilter (i `after`) m &&
+                                    hi == mfilter (i `before`) m &&
+                                    M.size lo + M.size c + M.size hi == M.size m))
 
 mfilter :: (Ord k) => (Interval k -> Bool) -> IntervalMap k a -> IntervalMap k a
 mfilter p m = M.filterWithKey (\k _ -> p k) m
@@ -497,6 +501,7 @@ main = do
           check prop_tests1 "tests1"
           check prop_tests2 "tests2"
           check prop_tests3 "tests3"
+          check prop_intersectingEmpty "intersecting with empty interval"
           check prop_mapKeys "mapKeys"
           check prop_valid "valid"
           check prop_singleton "singleton"

@@ -62,6 +62,9 @@ prop_overlaps =
   (c15 `overlaps` IntervalOC 0 1) &&
   not (c15 `overlaps` IntervalCO 0 1)
 
+prop_overlapsEmpty =
+  not (overlaps (IntervalCO 1 1) (IntervalCO 0 2))
+
 prop_subsumes1 =  (c15 `subsumes` o15) && -- closed subsumes open
                   not (o15 `subsumes` c15) && -- ~? "open does not subsume closed",
                   not (co15 `subsumes` c15) && -- "open does not subsume closed",
@@ -208,6 +211,7 @@ main = do
 	 check prop_compare_openness_closedness_upper_bound "compare_openness_closedness_upper_bound"
 	 check prop_contains1 "contains1"
 	 check prop_overlaps "overlaps"
+	 check prop_overlapsEmpty "empty does not overlap"
 	 check prop_subsumes1 "subsumes1"
 	 check prop_not_empty "not empty"
          check prop_below "below"

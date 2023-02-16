@@ -173,25 +173,28 @@ rightClosed _ = False
 -- | Do the two intervals overlap?
 overlaps :: (Ord a) => Interval a -> Interval a -> Bool
 
-overlaps (ClosedInterval lo1 hi1) (ClosedInterval lo2 hi2) =  lo1 <= hi2 && hi1 >= lo2
-overlaps (ClosedInterval lo1 hi1) (OpenInterval   lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
-overlaps (ClosedInterval lo1 hi1) (IntervalCO     lo2 hi2) =  lo1 <  hi2 && hi1 >= lo2
-overlaps (ClosedInterval lo1 hi1) (IntervalOC     lo2 hi2) =  lo1 <= hi2 && hi1 >  lo2
+overlaps a@(ClosedInterval lo1 hi1) b@(ClosedInterval lo2 hi2) =  lo1 <= hi2 && hi1 >= lo2 && bothNonEmpty a b
+overlaps a@(ClosedInterval lo1 hi1) b@(OpenInterval   lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
+overlaps a@(ClosedInterval lo1 hi1) b@(IntervalCO     lo2 hi2) =  lo1 <  hi2 && hi1 >= lo2 && bothNonEmpty a b
+overlaps a@(ClosedInterval lo1 hi1) b@(IntervalOC     lo2 hi2) =  lo1 <= hi2 && hi1 >  lo2 && bothNonEmpty a b
 
-overlaps (OpenInterval   lo1 hi1) (ClosedInterval lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
-overlaps (OpenInterval   lo1 hi1) (OpenInterval   lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
-overlaps (OpenInterval   lo1 hi1) (IntervalCO     lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
-overlaps (OpenInterval   lo1 hi1) (IntervalOC     lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
+overlaps a@(OpenInterval   lo1 hi1) b@(ClosedInterval lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
+overlaps a@(OpenInterval   lo1 hi1) b@(OpenInterval   lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
+overlaps a@(OpenInterval   lo1 hi1) b@(IntervalCO     lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
+overlaps a@(OpenInterval   lo1 hi1) b@(IntervalOC     lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
 
-overlaps (IntervalCO     lo1 hi1) (ClosedInterval lo2 hi2) =  lo1 <= hi2 && hi1 >  lo2
-overlaps (IntervalCO     lo1 hi1) (OpenInterval   lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
-overlaps (IntervalCO     lo1 hi1) (IntervalCO     lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
-overlaps (IntervalCO     lo1 hi1) (IntervalOC     lo2 hi2) =  lo1 <= hi2 && hi1 >  lo2
+overlaps a@(IntervalCO     lo1 hi1) b@(ClosedInterval lo2 hi2) =  lo1 <= hi2 && hi1 >  lo2 && bothNonEmpty a b
+overlaps a@(IntervalCO     lo1 hi1) b@(OpenInterval   lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
+overlaps a@(IntervalCO     lo1 hi1) b@(IntervalCO     lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
+overlaps a@(IntervalCO     lo1 hi1) b@(IntervalOC     lo2 hi2) =  lo1 <= hi2 && hi1 >  lo2 && bothNonEmpty a b
 
-overlaps (IntervalOC     lo1 hi1) (ClosedInterval lo2 hi2) =  lo1 <  hi2 && hi1 >= lo2
-overlaps (IntervalOC     lo1 hi1) (OpenInterval   lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
-overlaps (IntervalOC     lo1 hi1) (IntervalCO     lo2 hi2) =  lo1 <  hi2 && hi1 >= lo2
-overlaps (IntervalOC     lo1 hi1) (IntervalOC     lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2
+overlaps a@(IntervalOC     lo1 hi1) b@(ClosedInterval lo2 hi2) =  lo1 <  hi2 && hi1 >= lo2 && bothNonEmpty a b
+overlaps a@(IntervalOC     lo1 hi1) b@(OpenInterval   lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
+overlaps a@(IntervalOC     lo1 hi1) b@(IntervalCO     lo2 hi2) =  lo1 <  hi2 && hi1 >= lo2 && bothNonEmpty a b
+overlaps a@(IntervalOC     lo1 hi1) b@(IntervalOC     lo2 hi2) =  lo1 <  hi2 && hi1 >  lo2 && bothNonEmpty a b
+
+bothNonEmpty :: (Ord a) => Interval a -> Interval a -> Bool
+bothNonEmpty a b = not (isEmpty a || isEmpty b)
 
 
 -- | Does the first interval completely contain the second?
