@@ -8,7 +8,7 @@ import System.Exit (exitSuccess, exitFailure)
 import Test.QuickCheck hiding (within)
 import Test.QuickCheck.Test (isSuccess)
 import Control.Monad (liftM)
-import Prelude hiding (null, map, filter, foldr, foldl, splitAt)
+import Prelude hiding (Foldable(..), map, filter, splitAt)
 import qualified Data.List as L
 
 import Data.IntervalSet
@@ -48,7 +48,7 @@ prop_valid (IS s) =               valid s
 
 prop_null (IS s) =                null s == (size s == 0)
 
-prop_size (IS s) =                size s == length (toList s)
+prop_size (IS s) =                size s == L.length (toList s)
 
 prop_singleton :: II -> Bool
 prop_singleton iv =               size (singleton iv) == 1

@@ -200,7 +200,7 @@ module Data.IntervalMap.Generic.Base (
 
             ) where
 
-import Prelude hiding (null, lookup, map, filter, foldr, foldl, splitAt)
+import Prelude hiding (Foldable(..), lookup, map, filter, splitAt)
 import Data.Maybe (fromMaybe, fromJust)
 import Data.Bits (shiftR, (.&.))
 import qualified Data.Semigroup as Sem
@@ -1087,7 +1087,7 @@ data T2 a b = T2 !a !b
 fromDistinctAscList :: (Interval k e) => [(k,v)] -> IntervalMap k v
 -- exactly 2^n-1 items have height n. They can be all black
 -- from 2^n - 2^n-2 items have height n+1. The lowest "row" should be red.
-fromDistinctAscList lyst = case h (length lyst) lyst of
+fromDistinctAscList lyst = case h (L.length lyst) lyst of
                              (T2 result []) -> result
                              _ -> error "fromDistinctAscList: list not fully consumed"
   where
