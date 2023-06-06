@@ -1,3 +1,4 @@
+0.6.2.1  Future-proof against potential Prelude.foldl'
 0.6.2.0  Bugfix: Interval.overlaps could be true for empty intervals
 0.6.1.3  Remove unneeded languages pragmas.
 0.6.1.2  Enable and fix more warnings.
