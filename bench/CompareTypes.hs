@@ -15,44 +15,21 @@ import IntRange
 import qualified Data.IntervalMap.Generic.Strict as RB
 import qualified IvMapSortedList as SL
 import qualified Data.IntervalMap.FingerTree as FT
-import qualified Data.SegmentTree as ST
 
 
 instance Ord a => Interval (FT.Interval a) a where
   lowerBound = FT.low
   upperBound = FT.high
 
-instance Ord a => Interval (ST.Interval a) a where
-  lowerBound (ST.Interval _ (ST.R a) _ _) = a
-  lowerBound _ = error "interval lower"
-  upperBound (ST.Interval _ _ (ST.R a) _) = a
-  upperBound _ = error "interval upper"
-
-
 instance NFData a => NFData (FT.Interval a) where
   rnf (FT.Interval a b) = a `deepseq` b `deepseq` ()
-
-instance NFData a => NFData (ST.Interval a) where
-  rnf (ST.Interval _ (ST.R a) (ST.R b) _) = a `deepseq` b `deepseq` ()
-  rnf a = a `seq` ()
 
 instance (NFData k, NFData v) => NFData (FT.IntervalMap k v) where
   -- FIXME
   rnf a = a `seq` ()
 
-instance NFData v => NFData (ST.STree v Int) where
-  rnf (ST.Leaf a b) = a `deepseq` b `deepseq`()
-  rnf (ST.Branch a b c d) = a `deepseq` b `deepseq` c `deepseq` d `deepseq` ()
-
 ftFromList :: Ord k => [(FT.Interval k, v)] -> FT.IntervalMap k v
 ftFromList =  foldr (\(k,v) m -> FT.insert k v m) FT.empty
-
-stFromList :: [(Int,Int)] -> ST.STree [ST.Interval Int] Int
-stFromList = ST.fromList
-
-stLoBound :: ST.Interval Int -> Int
-stLoBound (ST.Interval{ST.low=(ST.R v)}) = v
-stLoBound _ = error "stLoBound"
 
 cSEED, cSEED2 :: Int
 cSEED  = 54321
@@ -103,14 +80,6 @@ ftEnv n = do
   where
    toIv (IntRange a b) = FT.Interval a b
 
-stEnv :: Int -> IO ([ST.Interval Int], ST.STree [ST.Interval Int] Int)
-stEnv n = do
-   let ivs  = genRandomIntervals n 20 n
-   let ivsFt = [(lo,hi) | (IntRange lo hi) <- nub ivs]
-   return (map toIv (mkKeys n), stFromList ivsFt)
-  where
-   toIv (IntRange a b) = ST.Interval ST.Closed (ST.R a) (ST.R b) ST.Closed
-
 
 runInsert :: Interval k a => (k -> a -> m -> m) -> m -> [k] -> m
 runInsert ins m keys = foldr (\k mp -> ins k (lowerBound k) mp) m keys
@@ -139,58 +108,43 @@ benchFT ~(keys,m) = bgroup "FingerTree" [
     bench "containing"  $ nf (\ks -> sum [v | k <- ks, (_,v) <- FT.search (FT.low k) m]) keys
   ]
 
-benchST :: ([ST.Interval Int], ST.STree [ST.Interval Int] Int) -> Benchmark
-benchST ~(keys,m) = bgroup "SegmentTree" [
-    bench "insert"      $ whnf (runInsert (\k _ mp -> ST.insert mp k) m) keys,
-    bench "containing"  $ nf (\ks -> sum [stLoBound v | k <- ks, v <- ST.stabbingQuery m (stLoBound k)]) keys
-  ]
-
-
 
 main :: IO ()
 main = defaultMainWith benchConfig [
         bgroup "10" [
            env (slEnv 10) benchSL,
            env (rbEnv 10) benchRB,
-           env (ftEnv 10) benchFT,
-           env (stEnv 10) benchST
+           env (ftEnv 10) benchFT
          ],
          bgroup "100" [
            env (slEnv 100) benchSL,
            env (rbEnv 100) benchRB,
-           env (ftEnv 100) benchFT,
-           env (stEnv 100) benchST
+           env (ftEnv 100) benchFT
          ],
          bgroup "1000" [
            env (slEnv 1000) benchSL,
            env (rbEnv 1000) benchRB,
-           env (ftEnv 1000) benchFT,
-           env (stEnv 1000) benchST
+           env (ftEnv 1000) benchFT
          ],
          bgroup "2500" [
            env (slEnv 2500) benchSL,
            env (rbEnv 2500) benchRB,
-           env (ftEnv 2500) benchFT,
-           env (stEnv 2500) benchST
+           env (ftEnv 2500) benchFT
          ],
          bgroup "10000" [
            env (rbEnv 10000) benchRB,
-           env (ftEnv 10000) benchFT,
-           env (stEnv 10000) benchST
+           env (ftEnv 10000) benchFT
          ],
          bgroup "20000" [
            env (rbEnv 20000) benchRB,
-           env (ftEnv 20000) benchFT,
-           env (stEnv 20000) benchST
+           env (ftEnv 20000) benchFT
          ],
          bgroup "50000" [
            env (rbEnv 50000) benchRB,
-           env (ftEnv 50000) benchFT,
-           env (stEnv 50000) benchST
+           env (ftEnv 50000) benchFT
          ],
          bgroup "100000" [
            env (rbEnv 100000) benchRB,
-           env (ftEnv 100000) benchFT,
-           env (stEnv 100000) benchST
+           env (ftEnv 100000) benchFT
          ]
        ]
