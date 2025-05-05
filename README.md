@@ -1,4 +1,4 @@
-# IntervalMap [![Hackage](https://img.shields.io/hackage/v/IntervalMap.svg)](https://hackage.haskell.org/package/IntervalMap) [![Continuous Integration](https://github.com/bokesan/IntervalMap/actions/workflows/ci.yml/badge.svg)]
+# IntervalMap [![Hackage](https://img.shields.io/hackage/v/IntervalMap.svg)](https://hackage.haskell.org/package/IntervalMap) ![Continuous Integration](https://github.com/bokesan/IntervalMap/actions/workflows/ci.yml/badge.svg)
 
 Containers for intervals. Like `Data.Set` and `Data.Map` with
 Intervals as keys and functions for efficiently getting the subset
