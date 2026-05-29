@@ -4,7 +4,7 @@ Containers for intervals. Like `Data.Set` and `Data.Map` with
 Intervals as keys and functions for efficiently getting the subset
 of all intervals containing a point, intersecting an interval, and more.
 
-Home page and documentation: [https://www.chr-breitkopf.de/comp/IntervalMap/index.html](http://www.chr-breitkopf.de/comp/IntervalMap/index.html)
+Home page and documentation: [https://www.chr-breitkopf.de/comp/IntervalMap/index.html](https://www.chr-breitkopf.de/comp/IntervalMap/index.html)
 
 ## Getting started
 
