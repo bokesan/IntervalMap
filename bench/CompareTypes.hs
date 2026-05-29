@@ -21,13 +21,6 @@ instance Ord a => Interval (FT.Interval a) a where
   lowerBound = FT.low
   upperBound = FT.high
 
-instance NFData a => NFData (FT.Interval a) where
-  rnf (FT.Interval a b) = a `deepseq` b `deepseq` ()
-
-instance (NFData k, NFData v) => NFData (FT.IntervalMap k v) where
-  -- FIXME
-  rnf a = a `seq` ()
-
 ftFromList :: Ord k => [(FT.Interval k, v)] -> FT.IntervalMap k v
 ftFromList =  foldr (\(k,v) m -> FT.insert k v m) FT.empty
 
