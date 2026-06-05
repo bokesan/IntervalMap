@@ -1,3 +1,4 @@
+0.6.2.4  Fix build error of benchmarks with ghc 9.12
 0.6.2.3  Fix benchmark broken by fingertree adding its own NFData instance
 0.6.2.2  Remove SegmentTree from benchmarks because it does not compile with current ghc/cabal
 0.6.2.1  Future-proof against potential Prelude.foldl'
