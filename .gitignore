@@ -13,3 +13,4 @@
 /cabal.project.local
 /doc/
 bench*.html
+.aider*
